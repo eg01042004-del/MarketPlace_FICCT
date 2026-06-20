@@ -474,28 +474,19 @@ function closeSidebar(){
 
 }
 
-hamburger?.addEventListener(
-"click",
-(e)=>{
+hamburger?.addEventListener("click",(e)=>{
+  e.preventDefault();
+  e.stopPropagation();
 
-e.preventDefault();
+  if(window.innerWidth <= 700){
+    return;
+  }
 
-e.stopPropagation();
+  sidebar?.classList.contains("open")
+  ? closeSidebar()
+  : openSidebar();
+});
 
-if(
-sidebar?.classList.contains("open")
-){
-
-closeSidebar();
-
-}else{
-
-openSidebar();
-
-}
-
-}
-);
 
 overlay?.addEventListener(
 "click",
