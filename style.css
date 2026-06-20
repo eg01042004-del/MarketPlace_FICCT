@@ -1468,3 +1468,44 @@ select,
 textarea{
   pointer-events:auto !important;
 }
+/* FIX DEFINITIVO BOTONES CELULAR */
+
+@media(max-width:700px){
+
+  .sidebar,
+  .sidebar.open,
+  .sidebar-overlay,
+  .sidebar-overlay.visible,
+  .sidebar-overlay.hidden{
+    display:none !important;
+    opacity:0 !important;
+    pointer-events:none !important;
+  }
+
+  .navbar{
+    position:sticky !important;
+    top:0 !important;
+    z-index:1000 !important;
+  }
+
+  .modal-overlay{
+    z-index:99999 !important;
+  }
+
+  .product-modal{
+    z-index:99999 !important;
+  }
+
+  button,
+  a,
+  input,
+  select,
+  textarea,
+  .nav-link,
+  .btn-login,
+  .tab-btn,
+  .btn-primary{
+    pointer-events:auto !important;
+    touch-action:manipulation !important;
+  }
+}
