@@ -306,7 +306,7 @@ input,select,textarea{
 
 /* LAYOUT */
 .layout{
-  margin-top:calc(var(--nav-height) + 70px);
+  margin-top:72px;
   min-height:100vh;
 }
 
