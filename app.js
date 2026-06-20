@@ -19,7 +19,7 @@ document.addEventListener("DOMContentLoaded", () => {
         sellModal: $("sellModal"),
 
         authArea: $("authArea"),
-        userMenu: $("userMenu"),
+        userMenu: $("userMenu"), 
         userName: $("userNameDisplay"),
 
         buyGrid: $("buyGrid"),
@@ -27,6 +27,21 @@ document.addEventListener("DOMContentLoaded", () => {
 
         navLinks: document.querySelectorAll("[data-section]")
     };
+    document.querySelectorAll(".tab-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+
+        document.querySelectorAll(".tab-btn")
+            .forEach(b => b.classList.remove("active"));
+
+        document.querySelectorAll(".tab-panel")
+            .forEach(p => p.classList.remove("active"));
+
+        btn.classList.add("active");
+
+        const tab = btn.dataset.tab;
+        document.getElementById(`tab-${tab}`).classList.add("active");
+    });
+});
 
     // ================= UI =================
     function render() {
