@@ -451,37 +451,54 @@ document.addEventListener("DOMContentLoaded", () => {
   setSection("home");
   render();
   // ===== SIDEBAR =====
-// ===== SIDEBAR =====
+/* ===== INICIO ===== */
+
+(async () => {
+  await loadProducts();
+
+  state.section = "home";
+
+  render();
+})();
+
+
+/* ===== SIDEBAR ===== */
 
 const sidebar = $("sidebar");
 const overlay = $("sidebarOverlay");
 const hamburger = $("hamburgerBtn");
 
 function openSidebar(){
-  sidebar?.classList.add("open");
 
-  overlay?.classList.remove("hidden");
+sidebar?.classList.add("open");
 
-  overlay?.classList.add("visible");
+overlay?.classList.remove("hidden");
+
+overlay?.classList.add("visible");
+
 }
 
 function closeSidebar(){
 
-  sidebar?.classList.remove("open");
+sidebar?.classList.remove("open");
 
-  overlay?.classList.remove("visible");
+overlay?.classList.remove("visible");
 
-  overlay?.classList.add("hidden");
+overlay?.classList.add("hidden");
 
 }
 
-hamburger?.addEventListener("click",(e)=>{
+hamburger?.addEventListener(
+"click",
+(e)=>{
 
 e.preventDefault();
 
 e.stopPropagation();
 
-if(sidebar?.classList.contains("open")){
+if(
+sidebar?.classList.contains("open")
+){
 
 closeSidebar();
 
@@ -491,7 +508,8 @@ openSidebar();
 
 }
 
-});
+}
+);
 
 overlay?.addEventListener(
 "click",
@@ -499,7 +517,7 @@ closeSidebar
 );
 
 document.addEventListener(
-"click",
+"touchstart",
 (e)=>{
 
 if(
