@@ -41,6 +41,7 @@ export async function publicarProducto(producto) {
   if (error) throw error;
 }
 
+
 export async function obtenerProductos() {
   const { data, error } = await supabase
     .from("productos")
