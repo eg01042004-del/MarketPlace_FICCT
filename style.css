@@ -1432,3 +1432,39 @@ background:#334155;
 .nav-right::-webkit-scrollbar-corner{
 background:transparent;
 }
+/* FIX BOTONES CELULAR BLOQUEADOS */
+
+.sidebar-overlay.hidden{
+  display:none !important;
+  opacity:0 !important;
+  pointer-events:none !important;
+}
+
+.sidebar-overlay:not(.visible){
+  display:none !important;
+  opacity:0 !important;
+  pointer-events:none !important;
+}
+
+.sidebar-overlay.visible{
+  display:block !important;
+  opacity:1 !important;
+  pointer-events:auto !important;
+}
+
+.navbar,
+.navbar *{
+  pointer-events:auto !important;
+}
+
+.modal-overlay{
+  pointer-events:auto !important;
+}
+
+button,
+a,
+input,
+select,
+textarea{
+  pointer-events:auto !important;
+}
