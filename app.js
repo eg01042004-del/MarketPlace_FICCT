@@ -478,10 +478,6 @@ hamburger?.addEventListener("click",(e)=>{
   e.preventDefault();
   e.stopPropagation();
 
-  if(window.innerWidth <= 700){
-    return;
-  }
-
   sidebar?.classList.contains("open")
   ? closeSidebar()
   : openSidebar();
