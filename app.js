@@ -17,45 +17,45 @@ document.addEventListener("DOMContentLoaded", () => {
     const ui = {
         loginModal: $("loginModal"),
         sellModal: $("sellModal"),
-
         authArea: $("authArea"),
-        userMenu: $("userMenu"), 
+        userMenu: $("userMenu"),
         userName: $("userNameDisplay"),
-
         buyGrid: $("buyGrid"),
+        recentGrid: $("recentGrid"),
         myGrid: $("myListingsGrid"),
-
         navLinks: document.querySelectorAll("[data-section]")
     };
+
+    // ================= TABS LOGIN / REGISTRO =================
     document.querySelectorAll(".tab-btn").forEach(btn => {
-    btn.addEventListener("click", () => {
+        btn.addEventListener("click", () => {
+            document.querySelectorAll(".tab-btn")
+                .forEach(b => b.classList.remove("active"));
 
-        document.querySelectorAll(".tab-btn")
-            .forEach(b => b.classList.remove("active"));
+            document.querySelectorAll(".tab-panel")
+                .forEach(p => p.classList.remove("active"));
 
-        document.querySelectorAll(".tab-panel")
-            .forEach(p => p.classList.remove("active"));
+            btn.classList.add("active");
 
-        btn.classList.add("active");
-
-        const tab = btn.dataset.tab;
-        document.getElementById(`tab-${tab}`).classList.add("active");
+            const tab = btn.dataset.tab;
+            document.getElementById(`tab-${tab}`)?.classList.add("active");
+        });
     });
-});
 
     // ================= UI =================
     function render() {
-
-        ui.loginModal.classList.toggle("hidden", !state.modal.login);
-        ui.sellModal.classList.toggle("hidden", !state.modal.sell);
+        ui.loginModal?.classList.toggle("hidden", !state.modal.login);
+        ui.sellModal?.classList.toggle("hidden", !state.modal.sell);
 
         if (state.user) {
-            ui.authArea.classList.add("hidden");
-            ui.userMenu.classList.remove("hidden");
-            ui.userName.textContent = state.user.email.split("@")[0];
+            ui.authArea?.classList.add("hidden");
+            ui.userMenu?.classList.remove("hidden");
+            if (ui.userName) {
+                ui.userName.textContent = state.user.email.split("@")[0];
+            }
         } else {
-            ui.authArea.classList.remove("hidden");
-            ui.userMenu.classList.add("hidden");
+            ui.authArea?.classList.remove("hidden");
+            ui.userMenu?.classList.add("hidden");
         }
 
         document.querySelectorAll(".section").forEach(s => {
@@ -64,6 +64,7 @@ document.addEventListener("DOMContentLoaded", () => {
         });
 
         const active = document.getElementById(`section-${state.section}`);
+
         if (active) {
             active.classList.remove("hidden");
             active.classList.add("active");
@@ -71,124 +72,153 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     // ================= MODALS =================
-    const openLogin = () => {
+    function openLogin() {
         state.modal.login = true;
         state.modal.sell = false;
         render();
-    };
+    }
 
-    const openSell = () => {
-        if (!state.user) return openLogin();
+    function openSell() {
+        if (!state.user) {
+            openLogin();
+            return;
+        }
+
         state.modal.sell = true;
         state.modal.login = false;
         render();
-    };
+    }
 
-    const closeModals = () => {
+    function closeModals() {
         state.modal.login = false;
         state.modal.sell = false;
         render();
-    };
+    }
 
     // ================= NAV =================
-    function setSection(sec) {
+    async function setSection(sec) {
         state.section = sec;
 
-        if (sec === "comprar") loadProducts();
-        if (sec === "vender") loadMyProducts();
+        if (sec === "comprar") await loadProducts();
+        if (sec === "vender") await loadMyProducts();
 
         render();
     }
 
     ui.navLinks.forEach(link => {
-        link.addEventListener("click", (e) => {
+        link.addEventListener("click", async (e) => {
             e.preventDefault();
-            setSection(link.dataset.section);
+            await setSection(link.dataset.section);
         });
     });
 
     // ================= AUTH EVENTS =================
-    $("btnPublish")?.addEventListener("click", async () => {
-    try {
-        await publicarProducto({
-            nombre: $("prodName").value,
-            precio: $("prodPrice").value,
-            categoria: $("prodCategory").value,
-            estado: $("prodCondition").value,
-            descripcion: $("prodDescription").value,
-            ubicacion: $("prodLocation").value,
-            imagen: $("prodImage").value,
-            telefono: $("prodPhone").value
-        });
+    $("btnLogin")?.addEventListener("click", openLogin);
+    $("modalClose")?.addEventListener("click", closeModals);
+    $("sellModalClose")?.addEventListener("click", closeModals);
 
-        alert("Producto publicado correctamente");
+    $("btnLogout")?.addEventListener("click", async () => {
+        await logout();
+        state.user = null;
+        state.myProducts = [];
+        $("dropdownMenu")?.classList.remove("open");
+        render();
+    });
 
-        closeModals();
-
-await loadProducts();
-
-state.section="comprar";
-
-render();
-
-    } catch (e) {
-        console.error(e);
-        alert("Error al publicar: " + e.message);
-    }
-});
-    $("btnLogin").addEventListener("click", openLogin);
-    $("modalClose").addEventListener("click", closeModals);
-    $("sellModalClose").addEventListener("click", closeModals);
-    $("btnLogout").addEventListener("click", logout);
-
-    $("btnEmailLogin").addEventListener("click", async () => {
+    $("btnEmailLogin")?.addEventListener("click", async () => {
         try {
             await login($("loginEmail").value, $("loginPassword").value);
             closeModals();
+            await loadProducts();
         } catch (e) {
             alert(e.message);
         }
     });
 
-    $("btnRegister").addEventListener("click", async () => {
+    $("btnRegister")?.addEventListener("click", async () => {
         try {
             await registrar($("regEmail").value, $("regPassword").value);
-            alert("Revisa tu correo");
+            alert("Revisa tu correo para confirmar tu cuenta");
         } catch (e) {
             alert(e.message);
         }
     });
 
-    $("btnOpenSell").addEventListener("click", () => {
-        if (!state.user) return openLogin();
+    $("btnOpenSell")?.addEventListener("click", () => {
         openSell();
     });
 
-    $("userAvatarBtn")?.addEventListener("click", () => {
+    $("userAvatarBtn")?.addEventListener("click", (e) => {
+        e.stopPropagation();
         $("dropdownMenu")?.classList.toggle("open");
     });
 
+    document.addEventListener("click", (e) => {
+        const menu = $("dropdownMenu");
+        const btn = $("userAvatarBtn");
+
+        if (
+            menu &&
+            btn &&
+            !menu.contains(e.target) &&
+            !btn.contains(e.target)
+        ) {
+            menu.classList.remove("open");
+        }
+    });
+
+    // ================= PUBLICAR PRODUCTO =================
+    $("btnPublish")?.addEventListener("click", async () => {
+        try {
+            if (!state.user) {
+                alert("Debes iniciar sesión");
+                openLogin();
+                return;
+            }
+
+            await publicarProducto({
+                nombre: $("prodName").value,
+                precio: $("prodPrice").value,
+                categoria: $("prodCategory").value,
+                estado: $("prodCondition").value,
+                descripcion: $("prodDescription").value,
+                ubicacion: $("prodLocation").value,
+                imagen: $("prodImage").value,
+                telefono: $("prodPhone").value
+            });
+
+            alert("Producto publicado correctamente");
+
+            closeModals();
+
+            await loadProducts();
+            await loadMyProducts();
+
+            state.section = "comprar";
+            render();
+
+        } catch (e) {
+            console.error(e);
+            alert("Error al publicar: " + e.message);
+        }
+    });
+
     // ================= AUTH SUPABASE =================
-    observarAuth((user)=>{
+    observarAuth(async (user) => {
+        state.user = user;
 
-state.user=user;
+        const msg = $("notLoggedSell");
 
-const msg=
-$("notLoggedSell");
+        if (user) {
+            msg?.classList.add("hidden");
+            await loadMyProducts();
+        } else {
+            msg?.classList.remove("hidden");
+            state.myProducts = [];
+        }
 
-if(user){
-
-msg?.classList.add("hidden");
-
-}else{
-
-msg?.classList.remove("hidden");
-
-}
-
-render();
-
-});
+        render();
+    });
 
     // ================= PRODUCT MODAL =================
     const productModal = $("productModal");
@@ -206,31 +236,33 @@ render();
     function openProductModal(p) {
         selectedProduct = p;
 
-        modalImg.src = p.imagen || "https://via.placeholder.com/400";
-        modalTitle.textContent = p.nombre || "";
-        modalPrice.textContent = `Bs ${p.precio || 0}`;
-        modalDesc.textContent = p.descripcion || "Sin descripción";
-        modalCat.textContent = p.categoria || "-";
-        modalState.textContent = p.estado || "-";
-        modalUb.textContent = p.ubicacion || "-";
+        if (modalImg) modalImg.src = p.imagen || "https://via.placeholder.com/400";
+        if (modalTitle) modalTitle.textContent = p.nombre || "";
+        if (modalPrice) modalPrice.textContent = `Bs ${p.precio || 0}`;
+        if (modalDesc) modalDesc.textContent = p.descripcion || "Sin descripción";
+        if (modalCat) modalCat.textContent = p.categoria || "-";
+        if (modalState) modalState.textContent = p.estado || "-";
+        if (modalUb) modalUb.textContent = p.ubicacion || "-";
 
-        productModal.classList.remove("hidden");
-        productModal.classList.add("show");
+        productModal?.classList.remove("hidden");
+        productModal?.classList.add("show");
     }
 
     function closeProductModal() {
-        productModal.classList.remove("show");
-        setTimeout(() => productModal.classList.add("hidden"), 200);
+        productModal?.classList.remove("show");
+        setTimeout(() => {
+            productModal?.classList.add("hidden");
+        }, 200);
+
         selectedProduct = null;
     }
 
-    // CLICK GLOBAL (FIXED)
     document.addEventListener("click", (e) => {
-
         const card = e.target.closest(".product-card");
 
         if (card && card.dataset.id) {
             const p = state.products.find(x => String(x.id) === String(card.dataset.id));
+
             if (p) openProductModal(p);
             return;
         }
@@ -244,7 +276,6 @@ render();
 
     // ================= CONTACT SELLER =================
     btnContact?.addEventListener("click", () => {
-
         if (!selectedProduct) return;
 
         const tel = selectedProduct.telefono;
@@ -269,77 +300,90 @@ render();
             const data = await obtenerProductos();
             state.products = data || [];
 
-            ui.buyGrid.innerHTML = state.products.length
-                ? state.products.map(renderCard).join("")
-                : `<p>No hay productos disponibles.</p>`;
+            if (ui.buyGrid) {
+                ui.buyGrid.innerHTML = state.products.length
+                    ? state.products.map(renderCard).join("")
+                    : `<p>No hay productos disponibles.</p>`;
+            }
+
+            if (ui.recentGrid) {
+                ui.recentGrid.innerHTML = state.products.length
+                    ? state.products.slice(0, 6).map(renderCard).join("")
+                    : `<p>No hay productos disponibles.</p>`;
+            }
 
         } catch (err) {
             console.error(err);
-            ui.buyGrid.innerHTML = `<p>Error cargando productos</p>`;
+
+            if (ui.buyGrid) {
+                ui.buyGrid.innerHTML = `<p>Error cargando productos</p>`;
+            }
+
+            if (ui.recentGrid) {
+                ui.recentGrid.innerHTML = `<p>Error cargando productos</p>`;
+            }
         }
     }
 
     async function loadMyProducts() {
-        const data = await obtenerMisProductos();
-        state.myProducts = data || [];
+        try {
+            if (!state.user) {
+                if (ui.myGrid) {
+                    ui.myGrid.innerHTML = "";
+                }
+                return;
+            }
 
-        ui.myGrid.innerHTML = state.myProducts.length
-            ? state.myProducts.map(renderCard).join("")
-            : `<p>No tienes productos publicados.</p>`;
+            const data = await obtenerMisProductos();
+            state.myProducts = data || [];
+
+            if (ui.myGrid) {
+                ui.myGrid.innerHTML = state.myProducts.length
+                    ? state.myProducts.map(renderCard).join("")
+                    : `<p>No tienes productos publicados.</p>`;
+            }
+
+        } catch (err) {
+            console.error(err);
+
+            if (ui.myGrid) {
+                ui.myGrid.innerHTML = `<p>Error cargando tus productos</p>`;
+            }
+        }
     }
 
-  function renderCard(p){
+    function renderCard(p) {
+        return `
+        <div class="product-card" data-id="${p.id}">
+            <img
+                class="product-img"
+                src="${p.imagen || 'https://via.placeholder.com/300'}"
+                onerror="this.src='https://via.placeholder.com/300'"
+            >
 
-return `
+            <div class="product-info">
+                <div class="product-category">
+                    ${p.categoria || "General"}
+                </div>
 
-<div class="product-card"
-data-id="${p.id}">
+                <div class="product-title">
+                    ${p.nombre || "Sin nombre"}
+                </div>
 
-<img
-class="product-img"
-src="${
-p.imagen ||
-'https://via.placeholder.com/300'
-}"
-onerror="
-this.src=
-'https://via.placeholder.com/300'
-">
+                <div class="product-price">
+                    Bs ${p.precio || 0}
+                </div>
 
-<div class="product-info">
-
-<div class="product-category">
-${p.categoria || "General"}
-</div>
-
-<div class="product-title">
-${p.nombre}
-</div>
-
-<div class="product-price">
-Bs ${p.precio}
-</div>
-
-<div class="product-meta">
-
-<span>
-
-📍
-${p.ubicacion || "Bolivia"}
-
-</span>
-
-</div>
-
-</div>
-
-</div>
-
-`;
-
-}
+                <div class="product-meta">
+                    <span>📍 ${p.ubicacion || "Bolivia"}</span>
+                </div>
+            </div>
+        </div>
+        `;
+    }
 
     // ================= INIT =================
+    loadProducts();
     setSection("home");
     render();
 });
@@ -381,4 +425,4 @@ hamburger?.addEventListener("mouseleave", () => {
     }, 200);
 });
 
-overlay?.addEventListener("click", closeSidebar); 
+overlay?.addEventListener("click", closeSidebar);
