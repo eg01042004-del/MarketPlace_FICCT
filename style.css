@@ -1594,3 +1594,104 @@ textarea{
     touch-action:manipulation !important;
   }
 }
+/* FIX MOVIL DEFINITIVO */
+
+@media(max-width:700px){
+
+.navbar{
+
+display:flex !important;
+
+flex-direction:column !important;
+
+height:auto !important;
+
+overflow:visible !important;
+
+}
+
+.nav-left,
+.nav-center,
+.nav-right{
+
+width:100% !important;
+
+min-width:0 !important;
+
+max-width:none !important;
+
+}
+
+.nav-right{
+
+overflow-x:auto !important;
+
+overflow-y:hidden !important;
+
+}
+
+.nav-links{
+
+display:flex !important;
+
+flex-wrap:nowrap !important;
+
+min-width:max-content !important;
+
+}
+
+.layout{
+
+margin-top:0 !important;
+
+}
+
+.sidebar{
+
+left:-260px !important;
+
+z-index:9000 !important;
+
+}
+
+.sidebar.open{
+
+left:0 !important;
+
+}
+
+.sidebar-overlay.hidden{
+
+display:none !important;
+
+}
+
+.sidebar-overlay.visible{
+
+display:block !important;
+
+opacity:1 !important;
+
+pointer-events:auto !important;
+
+}
+
+button,
+a,
+input,
+select,
+textarea{
+
+touch-action:manipulation;
+
+pointer-events:auto !important;
+
+}
+
+.modal-overlay{
+
+z-index:99999 !important;
+
+}
+
+}
