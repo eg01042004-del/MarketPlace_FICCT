@@ -1,0 +1,994 @@
+/* ==========================================================================
+   FICCT MARKET - HOJA DE ESTILOS PREMIUM
+   ========================================================================== */
+
+*{
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:root {
+  --bg-primary: #090d16;
+  --bg-secondary: #0f172a;
+  --bg-card: #1e293b;
+  --bg-input: #090d16;
+  --border: #334155;
+  --indigo: #6366f1;
+  --indigo-light: #818cf8;
+  --amber: #f59e0b;
+  --green: #10b981;
+  --red: #ef4444;
+  --text-primary: #f1f5f9;
+  --text-secondary: #94a3b8;
+  --text-muted: #64748b;
+  --nav-height: 72px;
+  --radius-md: 12px;
+  --radius-lg: 18px;
+  --radius-xl: 24px;
+  --shadow-lg: 0 8px 40px rgba(0,0,0,.6);
+  --font-sans: 'Inter', sans-serif;
+  --font-display: 'Sora', sans-serif;
+}
+
+body {
+  font-family: var(--font-sans);
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  min-height: 100vh;
+  overflow-x: hidden;
+  padding-top: var(--nav-height); /* Evita que el navbar tape contenido */
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button {
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+  background: none;
+}
+
+input, select, textarea {
+  font-family: inherit;
+}
+
+/* ==========================================================================
+   NAVBAR - COMPACTO, FIJO Y CON SCROLL DE CATEGORÍAS EN UNA SOLA FILA
+   ========================================================================== */
+.navbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: var(--nav-height);
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border);
+  display: flex !important;
+  flex-direction: row !important;
+  flex-wrap: nowrap !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 16px;
+  padding: 0 20px;
+  z-index: 2000;
+  overflow: visible !important;
+}
+
+/* NAVBAR IZQUIERDA: Hamburger, Auth buttons, Logo */
+.nav-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.hamburger {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  color: var(--text-secondary);
+  font-size: 18px;
+  transition: all 0.2s ease;
+}
+
+.hamburger:hover {
+  background: var(--border);
+  color: white;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 20px;
+  white-space: nowrap;
+}
+
+.brand-icon {
+  width: 36px;
+  height: 36px;
+  background: linear-gradient(135deg, var(--indigo), #4f46e5);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+}
+
+.brand-accent {
+  color: var(--indigo-light);
+}
+
+/* NAVBAR CENTRO: Buscador */
+.nav-center {
+  flex: 0 1 320px; /* Tamaño controlado para dar espacio a categorías */
+  min-width: 180px;
+}
+
+.search-bar {
+  display: flex;
+  align-items: center;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.search-icon {
+  padding: 0 12px;
+  color: var(--text-muted);
+}
+
+.search-bar input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: white;
+  padding: 10px 4px;
+  font-size: 14px;
+}
+
+.search-btn {
+  background: var(--indigo);
+  color: white;
+  padding: 11px 18px;
+  font-weight: 700;
+  font-size: 13px;
+  transition: opacity 0.2s;
+}
+
+.search-btn:hover {
+  opacity: 0.9;
+}
+
+/* NAVBAR DERECHA: Lista de Categorías Scrollable Horizontalmente */
+.nav-right {
+  flex: 1 1 auto;
+  min-width: 0; /* Permite scroll horizontal */
+  overflow-x: auto !important;
+  overflow-y: hidden !important;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+  padding-bottom: 2px; /* Espacio para scrollbar si aparece */
+}
+
+/* Quita barras de desplazamiento en navegadores modernos pero mantiene deslizamiento */
+.nav-right::-webkit-scrollbar {
+  height: 4px;
+}
+
+.nav-right::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.nav-right::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 10px;
+}
+
+.nav-links {
+  display: flex !important;
+  flex-direction: row !important;
+  flex-wrap: nowrap !important;
+  gap: 10px !important;
+  width: max-content;
+}
+
+.nav-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-secondary);
+  font-size: 14px;
+  font-weight: 700;
+  padding: 8px 12px;
+  border-radius: 12px;
+  white-space: nowrap;
+  flex-shrink: 0 !important;
+  transition: all 0.25s ease;
+  border-bottom: 3px solid transparent;
+}
+
+.nav-link:hover,
+.nav-link.active {
+  color: #10f0b0;
+  background: rgba(16, 240, 176, 0.1);
+  border-bottom: 3px solid #10f0b0;
+}
+
+/* AUTENTICACIÓN / MENÚ USUARIO EN NAVBAR */
+.btn-login {
+  background: var(--indigo);
+  color: white;
+  border-radius: 999px;
+  padding: 10px 20px;
+  font-weight: 700;
+  white-space: nowrap;
+  transition: all 0.2s;
+}
+
+.btn-login:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
+}
+
+.user-menu {
+  position: relative;
+  z-index: 5000;
+}
+
+.user-avatar-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 6px 12px;
+  color: white;
+  background: var(--bg-card);
+  transition: background 0.2s;
+}
+
+.user-avatar-btn:hover {
+  background: var(--border);
+}
+
+.user-avatar {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+}
+
+.dropdown-menu {
+  display: none;
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 8px;
+  min-width: 180px;
+  z-index: 6000;
+  box-shadow: var(--shadow-lg);
+}
+
+.dropdown-menu.open {
+  display: block;
+}
+
+.dropdown-item {
+  display: flex;
+  gap: 10px;
+  padding: 10px;
+  color: var(--text-secondary);
+  border-radius: 8px;
+  font-size: 14px;
+}
+
+.dropdown-item:hover {
+  background: var(--border);
+  color: white;
+}
+
+.dropdown-item.danger:hover {
+  color: var(--red);
+  background: rgba(239, 68, 68, 0.1);
+}
+
+/* ==========================================================================
+   SIDEBAR - LATERAL DE NAVEGACIÓN
+   ========================================================================== */
+.sidebar {
+  position: fixed;
+  top: var(--nav-height);
+  left: -260px;
+  width: 260px;
+  height: calc(100vh - var(--nav-height));
+  background: #101625;
+  border-right: 1px solid var(--border);
+  padding: 20px 12px;
+  transition: left .25s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 2500;
+  overflow-y: auto;
+}
+
+.sidebar.open {
+  left: 0 !important;
+}
+
+.sidebar-menu {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  list-style: none;
+}
+
+.sidebar-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  border-radius: 12px;
+  color: var(--text-secondary);
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.sidebar-item:hover,
+.sidebar-item.active {
+  background: rgba(99, 102, 241, 0.15);
+  color: white;
+}
+
+/* CAPA DE FONDO OSCURA DE SIDEBAR (OVERLAY) - TOTALMENTE MEJORADO PARA NO BLOQUEAR */
+.sidebar-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  transition: opacity .25s ease;
+  z-index: 2400;
+  display: none !important;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.sidebar-overlay.visible {
+  display: block !important;
+  opacity: 1 !important;
+  pointer-events: auto !important;
+}
+
+/* ==========================================================================
+   DISEÑO DE CONTENIDOS Y LAYOUT principal
+   ========================================================================== */
+.layout {
+  min-height: calc(100vh - var(--nav-height));
+  display: flex;
+}
+
+.main-content {
+  width: 100%;
+  padding: 30px;
+  transition: margin-left 0.25s ease;
+}
+
+.section {
+  display: none;
+}
+
+.section.active {
+  display: block;
+}
+
+.section-header {
+  margin: 10px 0 24px;
+}
+
+.section-header h2 {
+  font-family: var(--font-display);
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+/* HERO BANNER DE BIENVENIDA */
+.hero-banner {
+  background: linear-gradient(135deg, #1e1b4b, #0f172a, #030712);
+  border: 1px solid rgba(99, 102, 241, 0.25);
+  border-radius: var(--radius-xl);
+  padding: 54px;
+  margin-bottom: 40px;
+  position: relative;
+  overflow: hidden;
+}
+
+.hero-banner::before {
+  content: '';
+  position: absolute;
+  top: -20%;
+  right: -10%;
+  width: 300px;
+  height: 300px;
+  background: radial-gradient(circle, rgba(99, 102, 241, 0.15) 0%, transparent 70%);
+  z-index: 1;
+}
+
+.hero-text {
+  position: relative;
+  z-index: 2;
+  max-width: 600px;
+}
+
+.hero-text h1 {
+  font-size: 42px;
+  font-family: var(--font-display);
+  line-height: 1.15;
+  margin-bottom: 16px;
+  font-weight: 800;
+}
+
+.hero-highlight {
+  background: linear-gradient(90deg, var(--indigo-light), #10f0b0);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.hero-banner button {
+  margin-top: 12px;
+}
+
+/* ==========================================================================
+   TARJETAS DE PRODUCTOS (GRID DE PRODUCTOS)
+   ========================================================================== */
+.products-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 24px;
+}
+
+.product-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  flex-direction: column;
+}
+
+.product-card:hover {
+  transform: translateY(-5px);
+  border-color: var(--indigo);
+  box-shadow: var(--shadow-lg);
+}
+
+.product-img {
+  width: 100%;
+  height: 220px;
+  object-fit: cover;
+  background: #111827;
+  display: block;
+  border-bottom: 1px solid var(--border);
+}
+
+.product-info {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+}
+
+.product-category {
+  color: var(--indigo-light);
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  margin-bottom: 6px;
+}
+
+.product-title {
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.4;
+  margin-bottom: 8px;
+  color: var(--text-primary);
+}
+
+.product-price {
+  color: var(--amber);
+  font-size: 20px;
+  font-weight: 800;
+  margin-top: auto;
+}
+
+.product-meta {
+  margin-top: 12px;
+  color: var(--text-muted);
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+}
+
+.product-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.btn-edit,
+.btn-delete {
+  padding: 8px 12px;
+  border-radius: 8px;
+  color: white;
+  font-size: 12px;
+  font-weight: 800;
+  flex: 1;
+  text-align: center;
+  transition: opacity 0.15s;
+}
+
+.btn-edit {
+  background: var(--indigo);
+}
+
+.btn-delete {
+  background: var(--red);
+}
+
+.btn-edit:hover, .btn-delete:hover {
+  opacity: 0.9;
+}
+
+/* MANAGEMENT SELLER PRODUCTOS BANNER */
+.sell-hero {
+  background: linear-gradient(135deg, #131c31, #1e293b);
+  border: 1px solid rgba(245, 158, 11, 0.2);
+  border-radius: 24px;
+  padding: 50px 30px;
+  text-align: center;
+  margin-bottom: 34px;
+}
+
+.sell-hero h2 {
+  font-size: 32px;
+  font-family: var(--font-display);
+  font-weight: 700;
+}
+
+.sell-hero p {
+  color: var(--text-secondary);
+  margin: 12px 0 24px;
+}
+
+.not-logged-sell {
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  color: var(--red);
+  padding: 16px;
+  border-radius: 12px;
+  text-align: center;
+  margin-bottom: 24px;
+  font-weight: 600;
+}
+
+/* ==========================================================================
+   BOTONES GENERALES
+   ========================================================================== */
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: linear-gradient(135deg, var(--indigo), #4f46e5);
+  color: white;
+  border-radius: 999px;
+  padding: 12px 24px;
+  font-weight: 800;
+  transition: all 0.2s ease;
+  border: none;
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(99, 102, 241, 0.45);
+}
+
+.btn-primary.full-width {
+  width: 100%;
+}
+
+.btn-primary.large {
+  padding: 14px 36px;
+  font-size: 16px;
+}
+
+/* ==========================================================================
+   MODALES (REGISTRO, PUBLICACIONES & DETALLE PRODUCTO)
+   ========================================================================== */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.82);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+  z-index: 7000;
+  pointer-events: auto !important;
+}
+
+.modal-overlay.hidden {
+  display: none !important;
+}
+
+.modal-card {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: 24px;
+  width: 100%;
+  max-width: 440px;
+  max-height: 90vh;
+  overflow-y: auto;
+  position: relative;
+  box-shadow: var(--shadow-lg);
+  animation: modalEnter 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes modalEnter {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.modal-card.modal-wide {
+  max-width: 600px;
+}
+
+.modal-close {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--bg-primary);
+  color: white;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s;
+}
+
+.modal-close:hover {
+  background: var(--border);
+}
+
+.modal-header {
+  text-align: center;
+  padding: 36px 28px 20px;
+  border-bottom: 1px solid var(--border);
+}
+
+.modal-logo {
+  width: 56px;
+  height: 56px;
+  margin: 0 auto 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--indigo);
+  border-radius: 16px;
+  font-size: 24px;
+  color: white;
+}
+
+.modal-body {
+  padding: 26px;
+}
+
+.tab-group {
+  display: flex;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 4px;
+  margin-bottom: 20px;
+}
+
+.tab-btn {
+  flex: 1;
+  padding: 10px;
+  border-radius: 9px;
+  color: var(--text-secondary);
+  font-weight: 700;
+  font-size: 14px;
+}
+
+.tab-btn.active {
+  background: var(--indigo);
+  color: white;
+}
+
+.tab-panel {
+  display: none;
+}
+
+.tab-panel.active {
+  display: block;
+}
+
+.form-group {
+  margin-bottom: 16px;
+}
+
+.form-group label {
+  display: block;
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-weight: 700;
+  margin-bottom: 7px;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+  width: 100%;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  color: white;
+  border-radius: 12px;
+  padding: 12px 14px;
+  outline: none;
+  font-size: 14px;
+  transition: border-color 0.2s;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+  border-color: var(--indigo);
+}
+
+.form-group textarea {
+  min-height: 100px;
+  resize: vertical;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+/* VER DETALLE PRODUCTO MODAL */
+.product-modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.85);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 8000;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .2s ease;
+  padding: 16px;
+}
+
+.product-modal.show {
+  opacity: 1 !important;
+  pointer-events: auto !important;
+}
+
+.product-modal-content {
+  width: 480px;
+  max-width: 100%;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: 24px;
+  overflow: hidden;
+  position: relative;
+  box-shadow: var(--shadow-lg);
+  animation: modalEnter 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.modal-img {
+  width: 100%;
+  height: 260px;
+  object-fit: cover;
+  border-bottom: 1px solid var(--border);
+}
+
+.modal-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 16px;
+  margin-bottom: 20px;
+}
+
+.modal-meta span {
+  background: var(--bg-primary);
+  padding: 6px 12px;
+  color: var(--text-secondary);
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  font-size: 12.5px;
+  font-weight: 600;
+}
+
+.hidden {
+  display: none !important;
+}
+
+/* ==========================================================================
+   DISEÑO RESPONSIBLE ADAPTATIVO (MEDIA QUERIES)
+   ========================================================================== */
+
+/* PANTALLAS GRANDES Y MEDIANAS */
+@media (min-width: 901px) {
+  /* No se colapsa nada */
+}
+
+/* AJUSTES PARA PANTALLAS MEDIANAS Y MÓVILES (Celulares y tablets) */
+@media (max-width: 900px) {
+  .navbar {
+    padding: 0 12px;
+    gap: 10px;
+  }
+
+  .brand-name {
+    font-size: 16px;
+  }
+
+  .nav-center {
+    flex: 0 1 200px;
+  }
+
+  .search-btn {
+    padding: 11px 12px;
+  }
+}
+
+/* CELULARES - RESPONSIVE EXTREMO */
+@media (max-width: 600px) {
+  body {
+    padding-top: var(--nav-height);
+  }
+
+  .navbar {
+    height: var(--nav-height);
+    gap: 8px;
+  }
+
+  .brand-name {
+    display: none !important; /* Omitimos el texto para dar espacio completo al buscador + categorías */
+  }
+
+  .user-name {
+    display: none !important; /* Escondemos nombre de usuario al lado del avatar */
+  }
+
+  .nav-center {
+    flex: 1 1 120px; /* Buscador dinámico */
+    min-width: 100px;
+  }
+
+  .search-bar input {
+    padding: 8px 4px;
+    font-size: 13px;
+  }
+
+  .search-btn {
+    font-size: 11px;
+    padding: 9px 12px;
+  }
+
+  .nav-right {
+    flex: 2 1 auto;
+    padding-left: 4px;
+  }
+
+  .nav-link {
+    font-size: 13.5px;
+    padding: 6px 10px;
+  }
+
+  .hero-banner {
+    padding: 30px 20px;
+    text-align: center;
+  }
+
+  .hero-text h1 {
+    font-size: 26px;
+  }
+
+  .main-content {
+    padding: 16px;
+  }
+
+  .products-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  .product-img {
+    height: 140px;
+  }
+
+  .product-info {
+    padding: 10px;
+  }
+
+  .product-title {
+    font-size: 13.5px;
+    margin-bottom: 4px;
+  }
+
+  .product-price {
+    font-size: 16px;
+  }
+
+  .product-meta {
+    font-size: 11px;
+    margin-top: 6px;
+  }
+
+  .product-actions {
+    flex-direction: column;
+    gap: 6px;
+    margin-top: 10px;
+  }
+
+  .btn-edit, .btn-delete {
+    width: 100%;
+    padding: 7px 10px;
+  }
+
+  .form-row {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+
+  .modal-body {
+    padding: 20px;
+  }
+}
+
+/* Celulares ultra pequeños */
+@media (max-width: 400px) {
+  .products-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .product-img {
+    height: 180px;
+  }
+}
+
+/* COMPATIBILIDAD CON EVENTOS TÁCTILES Y BOTONES ACCESIBLES */
+button,
+a,
+input,
+select,
+textarea {
+  pointer-events: auto !important;
+  touch-action: manipulation !important;
+}

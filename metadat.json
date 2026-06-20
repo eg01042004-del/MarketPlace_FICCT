@@ -1,0 +1,6 @@
+{
+  "name": "FICCT Market",
+  "description": "FICCT Market es un marketplace universitario moderno con categorías, publicaciones, buscador e integración con Supabase.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
