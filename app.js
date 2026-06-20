@@ -15,7 +15,6 @@ import {
 } from "./productos.js";
 
 document.addEventListener("DOMContentLoaded", () => {
-
   const state = {
     user: null,
     modal: { login: false, sell: false },
@@ -39,22 +38,6 @@ document.addEventListener("DOMContentLoaded", () => {
     navLinks: document.querySelectorAll("[data-section]")
   };
 
-  // TABS LOGIN / REGISTRO
-  document.querySelectorAll(".tab-btn").forEach(btn => {
-    btn.addEventListener("click", () => {
-      document.querySelectorAll(".tab-btn")
-        .forEach(b => b.classList.remove("active"));
-
-      document.querySelectorAll(".tab-panel")
-        .forEach(p => p.classList.remove("active"));
-
-      btn.classList.add("active");
-
-      const tab = btn.dataset.tab;
-      document.getElementById(`tab-${tab}`)?.classList.add("active");
-    });
-  });
-
   function render() {
     ui.loginModal?.classList.toggle("hidden", !state.modal.login);
     ui.sellModal?.classList.toggle("hidden", !state.modal.sell);
@@ -62,10 +45,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (state.user) {
       ui.authArea?.classList.add("hidden");
       ui.userMenu?.classList.remove("hidden");
-
-      if (ui.userName) {
-        ui.userName.textContent = state.user.email.split("@")[0];
-      }
+      if (ui.userName) ui.userName.textContent = state.user.email.split("@")[0];
     } else {
       ui.authArea?.classList.remove("hidden");
       ui.userMenu?.classList.add("hidden");
@@ -77,11 +57,8 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     const active = document.getElementById(`section-${state.section}`);
-
-    if (active) {
-      active.classList.remove("hidden");
-      active.classList.add("active");
-    }
+    active?.classList.remove("hidden");
+    active?.classList.add("active");
   }
 
   function openLogin() {
@@ -91,11 +68,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function openSell() {
-    if (!state.user) {
-      openLogin();
-      return;
-    }
-
+    if (!state.user) return openLogin();
     state.modal.sell = true;
     state.modal.login = false;
     render();
@@ -109,10 +82,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
   async function setSection(sec) {
     state.section = sec;
-
     if (sec === "comprar") await loadProducts();
     if (sec === "vender") await loadMyProducts();
-
     render();
   }
 
@@ -123,9 +94,19 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   });
 
+  document.querySelectorAll(".tab-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+      document.querySelectorAll(".tab-panel").forEach(p => p.classList.remove("active"));
+      btn.classList.add("active");
+      document.getElementById(`tab-${btn.dataset.tab}`)?.classList.add("active");
+    });
+  });
+
   $("btnLogin")?.addEventListener("click", openLogin);
   $("modalClose")?.addEventListener("click", closeModals);
   $("sellModalClose")?.addEventListener("click", closeModals);
+  $("btnOpenSell")?.addEventListener("click", openSell);
 
   $("btnLogout")?.addEventListener("click", async () => {
     await logout();
@@ -148,14 +129,10 @@ document.addEventListener("DOMContentLoaded", () => {
   $("btnRegister")?.addEventListener("click", async () => {
     try {
       await registrar($("regEmail").value, $("regPassword").value);
-      alert("Revisa tu correo para confirmar tu cuenta");
+      alert("Cuenta creada. Ahora inicia sesión.");
     } catch (e) {
       alert(e.message);
     }
-  });
-
-  $("btnOpenSell")?.addEventListener("click", () => {
-    openSell();
   });
 
   $("userAvatarBtn")?.addEventListener("click", (e) => {
@@ -167,32 +144,19 @@ document.addEventListener("DOMContentLoaded", () => {
     const menu = $("dropdownMenu");
     const btn = $("userAvatarBtn");
 
-    if (
-      menu &&
-      btn &&
-      !menu.contains(e.target) &&
-      !btn.contains(e.target)
-    ) {
+    if (menu && btn && !menu.contains(e.target) && !btn.contains(e.target)) {
       menu.classList.remove("open");
     }
   });
 
-  // PUBLICAR / EDITAR PRODUCTO
   $("btnPublish")?.addEventListener("click", async () => {
     try {
-      if (!state.user) {
-        alert("Debes iniciar sesión");
-        openLogin();
-        return;
-      }
+      if (!state.user) return openLogin();
 
       let imagenFinal = $("prodImage").value;
-
       const file = $("prodImageFile")?.files?.[0];
 
-      if (file) {
-        imagenFinal = await subirImagenProducto(file);
-      }
+      if (file) imagenFinal = await subirImagenProducto(file);
 
       const producto = {
         nombre: $("prodName").value,
@@ -208,19 +172,15 @@ document.addEventListener("DOMContentLoaded", () => {
       if (state.editId) {
         await actualizarProducto(state.editId, producto);
         alert("Producto actualizado");
-        state.editId = null;
-        $("btnPublish").textContent = "Publicar";
       } else {
         await publicarProducto(producto);
-        alert("Producto publicado correctamente");
+        alert("Producto publicado");
       }
 
       limpiarFormulario();
       closeModals();
-
       await loadProducts();
       await loadMyProducts();
-
       state.section = "vender";
       render();
 
@@ -232,7 +192,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
   observarAuth(async (user) => {
     state.user = user;
-
     const msg = $("notLoggedSell");
 
     if (user) {
@@ -246,7 +205,6 @@ document.addEventListener("DOMContentLoaded", () => {
     render();
   });
 
-  // MODAL PRODUCTO
   const productModal = $("productModal");
   const modalImg = $("modalImg");
   const modalTitle = $("modalTitle");
@@ -261,7 +219,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function openProductModal(p) {
     selectedProduct = p;
-
     if (modalImg) modalImg.src = p.imagen || "https://via.placeholder.com/400";
     if (modalTitle) modalTitle.textContent = p.nombre || "";
     if (modalPrice) modalPrice.textContent = `Bs ${p.precio || 0}`;
@@ -276,11 +233,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function closeProductModal() {
     productModal?.classList.remove("show");
-
-    setTimeout(() => {
-      productModal?.classList.add("hidden");
-    }, 200);
-
+    setTimeout(() => productModal?.classList.add("hidden"), 200);
     selectedProduct = null;
   }
 
@@ -303,17 +256,12 @@ document.addEventListener("DOMContentLoaded", () => {
     const card = e.target.closest(".product-card");
 
     if (card && card.dataset.id) {
-      const p = state.products.find(
-        x => String(x.id) === String(card.dataset.id)
-      );
-
+      const p = state.products.find(x => String(x.id) === String(card.dataset.id));
       if (p) openProductModal(p);
       return;
     }
 
-    if (e.target.id === "productModal") {
-      closeProductModal();
-    }
+    if (e.target.id === "productModal") closeProductModal();
   });
 
   $("closeProductModal")?.addEventListener("click", closeProductModal);
@@ -322,18 +270,10 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!selectedProduct) return;
 
     const tel = selectedProduct.telefono;
-
-    if (!tel) {
-      alert("El vendedor no dejó número de contacto");
-      return;
-    }
+    if (!tel) return alert("El vendedor no dejó número de contacto");
 
     const cleanTel = tel.replace(/\D/g, "");
-
-    const msg = encodeURIComponent(
-      `Hola, vi tu producto "${selectedProduct.nombre}" en FICCT Market y estoy interesado.`
-    );
-
+    const msg = encodeURIComponent(`Hola, vi tu producto "${selectedProduct.nombre}" en FICCT Market y estoy interesado.`);
     window.open(`https://wa.me/${cleanTel}?text=${msg}`, "_blank");
   });
 
@@ -356,39 +296,24 @@ document.addEventListener("DOMContentLoaded", () => {
 
     } catch (err) {
       console.error(err);
-
-      if (ui.buyGrid) {
-        ui.buyGrid.innerHTML = `<p>Error cargando productos</p>`;
-      }
-
-      if (ui.recentGrid) {
-        ui.recentGrid.innerHTML = `<p>Error cargando productos</p>`;
-      }
+      if (ui.buyGrid) ui.buyGrid.innerHTML = `<p>Error cargando productos</p>`;
+      if (ui.recentGrid) ui.recentGrid.innerHTML = `<p>Error cargando productos</p>`;
     }
   }
 
   async function loadMyProducts() {
-    try {
-      if (!state.user) {
-        if (ui.myGrid) ui.myGrid.innerHTML = "";
-        return;
-      }
+    if (!state.user) {
+      if (ui.myGrid) ui.myGrid.innerHTML = "";
+      return;
+    }
 
-      const data = await obtenerMisProductos();
-      state.myProducts = data || [];
+    const data = await obtenerMisProductos();
+    state.myProducts = data || [];
 
-      if (ui.myGrid) {
-        ui.myGrid.innerHTML = state.myProducts.length
-          ? state.myProducts.map(renderCard).join("")
-          : `<p>No tienes productos publicados.</p>`;
-      }
-
-    } catch (err) {
-      console.error(err);
-
-      if (ui.myGrid) {
-        ui.myGrid.innerHTML = `<p>Error cargando tus productos</p>`;
-      }
+    if (ui.myGrid) {
+      ui.myGrid.innerHTML = state.myProducts.length
+        ? state.myProducts.map(renderCard).join("")
+        : `<p>No tienes productos publicados.</p>`;
     }
   }
 
@@ -399,21 +324,13 @@ document.addEventListener("DOMContentLoaded", () => {
     $("prodLocation").value = "Santa Cruz, Bolivia";
     $("prodImage").value = "";
     $("prodPhone").value = "";
-
-    if ($("prodImageFile")) {
-      $("prodImageFile").value = "";
-    }
-
+    if ($("prodImageFile")) $("prodImageFile").value = "";
     state.editId = null;
-
-    if ($("btnPublish")) {
-      $("btnPublish").textContent = "Publicar";
-    }
+    if ($("btnPublish")) $("btnPublish").textContent = "Publicar";
   }
 
   function editarProducto(id) {
     const p = state.myProducts.find(x => String(x.id) === String(id));
-
     if (!p) return;
 
     state.editId = p.id;
@@ -428,23 +345,17 @@ document.addEventListener("DOMContentLoaded", () => {
     $("prodPhone").value = p.telefono || "";
 
     $("btnPublish").textContent = "Guardar cambios";
-
     openSell();
   }
 
   async function borrarProducto(id) {
-    const ok = confirm("¿Eliminar este producto?");
-
-    if (!ok) return;
+    if (!confirm("¿Eliminar este producto?")) return;
 
     try {
       await eliminarProducto(id);
-
       alert("Producto eliminado");
-
       await loadProducts();
       await loadMyProducts();
-
     } catch (e) {
       alert("Error al eliminar: " + e.message);
     }
@@ -455,52 +366,38 @@ document.addEventListener("DOMContentLoaded", () => {
 
     return `
       <div class="product-card" data-id="${p.id}">
-        <img
-          class="product-img"
+        <img class="product-img"
           src="${p.imagen || 'https://via.placeholder.com/300'}"
-          onerror="this.src='https://via.placeholder.com/300'"
-        >
+          onerror="this.src='https://via.placeholder.com/300'">
 
         <div class="product-info">
           <div class="product-category">${p.categoria || "General"}</div>
           <div class="product-title">${p.nombre || "Sin nombre"}</div>
           <div class="product-price">Bs ${p.precio || 0}</div>
+          <div class="product-meta"><span>📍 ${p.ubicacion || "Bolivia"}</span></div>
 
-          <div class="product-meta">
-            <span>📍 ${p.ubicacion || "Bolivia"}</span>
-          </div>
-
-          ${
-            isMine
-              ? `
-              <div class="product-actions">
-                <button class="btn-edit" data-edit="${p.id}">Editar</button>
-                <button class="btn-delete" data-delete="${p.id}">Eliminar</button>
-              </div>
-              `
-              : ""
-          }
+          ${isMine ? `
+            <div class="product-actions">
+              <button class="btn-edit" data-edit="${p.id}">Editar</button>
+              <button class="btn-delete" data-delete="${p.id}">Eliminar</button>
+            </div>
+          ` : ""}
         </div>
       </div>
     `;
   }
 
-  // CATEGORÍAS
   document.querySelectorAll(".cat-tab").forEach(btn => {
     btn.addEventListener("click", async () => {
-      document.querySelectorAll(".cat-tab")
-        .forEach(b => b.classList.remove("active"));
-
+      document.querySelectorAll(".cat-tab").forEach(b => b.classList.remove("active"));
       btn.classList.add("active");
 
       await loadProducts();
 
       const categoria = btn.dataset.category;
-
-      const filtrados =
-        categoria === "Todos"
-          ? state.products
-          : state.products.filter(p => p.categoria === categoria);
+      const filtrados = categoria === "Todos"
+        ? state.products
+        : state.products.filter(p => p.categoria === categoria);
 
       if (ui.buyGrid) {
         ui.buyGrid.innerHTML = filtrados.length
@@ -512,42 +409,44 @@ document.addEventListener("DOMContentLoaded", () => {
       render();
     });
   });
-function filtrarBusqueda() {
-  const texto = $("searchInput")?.value.toLowerCase().trim() || "";
 
-  const resultados = state.products.filter(p =>
-    (p.nombre || "").toLowerCase().includes(texto) ||
-    (p.descripcion || "").toLowerCase().includes(texto) ||
-    (p.categoria || "").toLowerCase().includes(texto) ||
-    (p.ubicacion || "").toLowerCase().includes(texto)
-  );
+  function filtrarBusqueda() {
+    const texto = $("searchInput")?.value.toLowerCase().trim() || "";
 
-  state.section = "comprar";
+    const resultados = state.products.filter(p =>
+      (p.nombre || "").toLowerCase().includes(texto) ||
+      (p.descripcion || "").toLowerCase().includes(texto) ||
+      (p.categoria || "").toLowerCase().includes(texto) ||
+      (p.ubicacion || "").toLowerCase().includes(texto)
+    );
 
-  if (ui.buyGrid) {
-    ui.buyGrid.innerHTML = resultados.length
-      ? resultados.map(renderCard).join("")
-      : `<p>No se encontraron productos.</p>`;
+    state.section = "comprar";
+
+    if (ui.buyGrid) {
+      ui.buyGrid.innerHTML = resultados.length
+        ? resultados.map(renderCard).join("")
+        : `<p>No se encontraron productos.</p>`;
+    }
+
+    render();
   }
 
-  render();
-}
-
-$("searchBtn")?.addEventListener("click", async () => {
-  await loadProducts();
-  filtrarBusqueda();
-});
-
-$("searchInput")?.addEventListener("keyup", async (e) => {
-  if (e.key === "Enter") {
+  $("searchBtn")?.addEventListener("click", async () => {
     await loadProducts();
     filtrarBusqueda();
-  }
-});
-$("searchInput")?.addEventListener("input", () => {
-  filtrarBusqueda();
-});
-  // INIT
+  });
+
+  $("searchInput")?.addEventListener("keyup", async (e) => {
+    if (e.key === "Enter") {
+      await loadProducts();
+      filtrarBusqueda();
+    }
+  });
+
+  $("searchInput")?.addEventListener("input", () => {
+    filtrarBusqueda();
+  });
+
   loadProducts();
   setSection("home");
   render();
@@ -557,8 +456,6 @@ $("searchInput")?.addEventListener("input", () => {
 const sidebar = document.querySelector(".sidebar");
 const overlay = document.querySelector(".sidebar-overlay");
 const hamburger = document.querySelector(".hamburger");
-
-let closeTimeout;
 
 function openSidebar() {
   sidebar?.classList.add("open");
@@ -570,24 +467,25 @@ function closeSidebar() {
   overlay?.classList.remove("visible");
 }
 
-hamburger?.addEventListener("mouseenter", () => {
-  clearTimeout(closeTimeout);
-  openSidebar();
-});
+hamburger?.addEventListener("click", (e) => {
+  e.stopPropagation();
 
-sidebar?.addEventListener("mouseenter", () => {
-  clearTimeout(closeTimeout);
-  openSidebar();
-});
-
-sidebar?.addEventListener("mouseleave", () => {
-  closeTimeout = setTimeout(closeSidebar, 200);
-});
-
-hamburger?.addEventListener("mouseleave", () => {
-  closeTimeout = setTimeout(() => {
-    if (!sidebar?.matches(":hover")) closeSidebar();
-  }, 200);
+  if (sidebar?.classList.contains("open")) {
+    closeSidebar();
+  } else {
+    openSidebar();
+  }
 });
 
 overlay?.addEventListener("click", closeSidebar);
+
+document.addEventListener("click", (e) => {
+  if (
+    sidebar &&
+    hamburger &&
+    !sidebar.contains(e.target) &&
+    !hamburger.contains(e.target)
+  ) {
+    closeSidebar();
+  }
+});
