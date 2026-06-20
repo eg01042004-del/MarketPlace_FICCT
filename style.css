@@ -1389,4 +1389,46 @@ border-radius:20px;
 .nav-link{
 flex-shrink:0;
 }
+/* SCROLL SOLO PARA CATEGORIAS — ESTILO OSCURO */
 
+.nav-right{
+overflow-x:auto !important;
+
+overflow-y:hidden !important;
+
+scrollbar-width:thin;
+
+scrollbar-color:#23314d transparent;
+}
+
+/* Chrome */
+
+.nav-right::-webkit-scrollbar{
+height:5px;
+}
+
+.nav-right::-webkit-scrollbar-track{
+
+background:transparent;
+
+}
+
+.nav-right::-webkit-scrollbar-thumb{
+
+background:#23314d;
+
+border-radius:20px;
+
+}
+
+.nav-right::-webkit-scrollbar-thumb:hover{
+
+background:#334155;
+
+}
+
+/* quitar scroll vertical feo */
+
+.nav-right::-webkit-scrollbar-corner{
+background:transparent;
+}
