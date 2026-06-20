@@ -512,7 +512,41 @@ document.addEventListener("DOMContentLoaded", () => {
       render();
     });
   });
+function filtrarBusqueda() {
+  const texto = $("searchInput")?.value.toLowerCase().trim() || "";
 
+  const resultados = state.products.filter(p =>
+    (p.nombre || "").toLowerCase().includes(texto) ||
+    (p.descripcion || "").toLowerCase().includes(texto) ||
+    (p.categoria || "").toLowerCase().includes(texto) ||
+    (p.ubicacion || "").toLowerCase().includes(texto)
+  );
+
+  state.section = "comprar";
+
+  if (ui.buyGrid) {
+    ui.buyGrid.innerHTML = resultados.length
+      ? resultados.map(renderCard).join("")
+      : `<p>No se encontraron productos.</p>`;
+  }
+
+  render();
+}
+
+$("searchBtn")?.addEventListener("click", async () => {
+  await loadProducts();
+  filtrarBusqueda();
+});
+
+$("searchInput")?.addEventListener("keyup", async (e) => {
+  if (e.key === "Enter") {
+    await loadProducts();
+    filtrarBusqueda();
+  }
+});
+$("searchInput")?.addEventListener("input", () => {
+  filtrarBusqueda();
+});
   // INIT
   loadProducts();
   setSection("home");
