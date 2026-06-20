@@ -1030,3 +1030,363 @@ height:190px;
 .dropdown-menu{
   z-index:6000 !important;
 }
+.sidebar{
+  left:-260px !important;
+  transform:none !important;
+}
+
+.sidebar.open{
+  left:0 !important;
+}
+
+.sidebar-overlay.hidden{
+  display:none !important;
+}
+
+.sidebar-overlay.visible{
+  display:block !important;
+  opacity:1 !important;
+  pointer-events:auto !important;
+}
+.brand{
+  min-width:170px !important;
+  overflow:visible !important;
+}
+
+.brand-name{
+  display:inline-block !important;
+  white-space:nowrap !important;
+}
+
+.nav-left{
+  min-width:320px !important;
+  overflow:visible !important;
+}
+
+.nav-center{
+  max-width:420px !important;
+}
+
+.navbar{
+  overflow-x:auto !important;
+  overflow-y:visible !important;
+}
+/* FIX LOGO NO TAPADO */
+
+.nav-left{
+  flex:0 0 360px !important;
+  min-width:360px !important;
+}
+
+.brand{
+  flex-shrink:0 !important;
+  min-width:180px !important;
+}
+
+.brand-name{
+  display:inline-block !important;
+  white-space:nowrap !important;
+}
+
+.nav-center{
+  flex:1 1 360px !important;
+  max-width:520px !important;
+}
+
+.search-bar{
+  width:100% !important;
+}
+
+@media(max-width:900px){
+  .nav-left{
+    flex:1 1 100% !important;
+    min-width:100% !important;
+  }
+
+  .nav-center{
+    flex:1 1 100% !important;
+    max-width:100% !important;
+  }
+}
+/* FIX LOGO + BUSCADOR */
+
+.navbar{
+display:flex !important;
+
+align-items:center !important;
+
+gap:18px !important;
+
+overflow-x:auto !important;
+}
+
+.nav-left{
+
+display:flex !important;
+
+align-items:center !important;
+
+gap:12px !important;
+
+flex:0 0 300px !important;
+
+min-width:300px !important;
+
+}
+
+.brand{
+
+display:flex !important;
+
+align-items:center !important;
+
+gap:10px !important;
+
+flex-shrink:0 !important;
+
+}
+
+.brand-name{
+
+display:inline-block !important;
+
+white-space:nowrap !important;
+
+font-size:18px !important;
+
+}
+
+.nav-center{
+
+flex:1 !important;
+
+max-width:420px !important;
+
+min-width:260px !important;
+
+}
+
+.search-bar{
+
+width:100% !important;
+
+}
+
+.nav-right{
+
+flex:1 !important;
+
+overflow-x:auto !important;
+
+}
+
+@media(max-width:1100px){
+
+.nav-left{
+
+flex:0 0 240px !important;
+
+min-width:240px !important;
+
+}
+
+.brand-name{
+
+font-size:16px !important;
+
+}
+
+.nav-center{
+
+max-width:320px !important;
+
+}
+
+}
+/* FIX FINAL LOGO VISIBLE */
+
+.navbar{
+  display:grid !important;
+  grid-template-columns: 430px 360px 1fr !important;
+  align-items:center !important;
+  
+}
+
+.nav-left{
+  width:430px !important;
+  min-width:430px !important;
+  flex:none !important;
+}
+
+.brand{
+  display:inline-flex !important;
+  min-width:190px !important;
+  flex-shrink:0 !important;
+}
+
+.brand-name{
+  display:inline-block !important;
+  visibility:visible !important;
+  opacity:1 !important;
+  white-space:nowrap !important;
+  font-size:18px !important;
+}
+
+.nav-center{
+  width:360px !important;
+  min-width:360px !important;
+  max-width:360px !important;
+  flex:none !important;
+}
+/* QUITAR BARRAS DE ARRASTRE */
+
+html,
+body{
+overflow-x:hidden !important;
+}
+
+.navbar{
+overflow:hidden !important;
+
+display:flex !important;
+
+align-items:center !important;
+
+gap:12px !important;
+}
+
+.nav-left{
+
+flex:0 0 auto !important;
+
+min-width:auto !important;
+
+}
+
+.brand{
+
+display:flex !important;
+
+align-items:center !important;
+
+gap:10px !important;
+
+}
+
+.brand-name{
+
+display:inline-block !important;
+
+white-space:nowrap !important;
+
+}
+
+.nav-center{
+
+flex:1 !important;
+
+max-width:320px !important;
+
+min-width:220px !important;
+
+}
+
+.nav-right{
+
+display:flex !important;
+
+flex:1 !important;
+
+overflow:hidden !important;
+
+justify-content:flex-start !important;
+
+}
+
+.nav-links{
+
+display:flex !important;
+
+gap:10px !important;
+
+flex-wrap:nowrap !important;
+
+overflow:hidden !important;
+
+}
+
+.nav-link{
+
+font-size:14px !important;
+
+padding:8px !important;
+
+}
+/* SOLO CATEGORIAS CON SCROLL */
+
+/* quitar scroll general */
+html,
+body{
+overflow-x:hidden !important;
+}
+
+.navbar{
+overflow:hidden !important;
+}
+
+/* logo */
+.nav-left{
+flex-shrink:0;
+}
+
+/* buscador */
+.nav-center{
+flex:0 0 360px !important;
+max-width:360px !important;
+}
+
+/* SOLO ESTA PARTE DESLIZA */
+.nav-right{
+
+display:flex !important;
+
+align-items:center;
+
+overflow-x:auto !important;
+
+overflow-y:hidden !important;
+
+white-space:nowrap;
+
+scrollbar-width:thin;
+
+}
+
+/* categorias */
+.nav-links{
+
+display:flex !important;
+
+flex-wrap:nowrap !important;
+
+min-width:max-content;
+
+gap:10px;
+
+}
+
+/* ocultar barra pero mantener deslizamiento */
+.nav-right::-webkit-scrollbar{
+height:6px;
+}
+
+.nav-right::-webkit-scrollbar-thumb{
+background:#4f46e5;
+border-radius:20px;
+}
+
+/* categorias */
+.nav-link{
+flex-shrink:0;
+}
+
