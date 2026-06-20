@@ -451,6 +451,7 @@ document.addEventListener("DOMContentLoaded", () => {
   setSection("home");
   render();
   // ===== SIDEBAR =====
+// ===== SIDEBAR =====
 
 const sidebar = $("sidebar");
 const overlay = $("sidebarOverlay");
@@ -475,14 +476,22 @@ function closeSidebar(){
 }
 
 hamburger?.addEventListener("click",(e)=>{
-  e.preventDefault();
-  e.stopPropagation();
 
-  sidebar?.classList.contains("open")
-  ? closeSidebar()
-  : openSidebar();
+e.preventDefault();
+
+e.stopPropagation();
+
+if(sidebar?.classList.contains("open")){
+
+closeSidebar();
+
+}else{
+
+openSidebar();
+
+}
+
 });
-
 
 overlay?.addEventListener(
 "click",
@@ -507,5 +516,3 @@ closeSidebar();
 }
 );
 });
-
-// SIDEBAR
