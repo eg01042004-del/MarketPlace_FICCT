@@ -378,16 +378,78 @@ if (editandoGuardado) {
   }
 
   async function borrarProducto(id) {
-    if (!confirm("¿Eliminar este producto?")) return;
+   async function borrarProducto(id){
 
-    try {
-      await eliminarProducto(id);
-      alert("Producto eliminado");
-      await loadProducts();
-      await loadMyProducts();
-    } catch (e) {
-      alert("Error al eliminar: " + e.message);
-    }
+const modal=
+document.getElementById(
+"deleteModal"
+);
+
+modal.classList.remove(
+"hidden"
+);
+
+return new Promise(
+
+(resolve)=>{
+
+document
+.getElementById(
+"cancelDelete"
+)
+
+.onclick=()=>{
+
+modal.classList.add(
+"hidden"
+);
+
+resolve();
+
+};
+
+document
+.getElementById(
+"confirmDelete"
+)
+
+.onclick=async()=>{
+
+modal.classList.add(
+"hidden"
+);
+
+try{
+
+await eliminarProducto(
+id
+);
+
+alert(
+"Producto eliminado"
+);
+
+await loadProducts();
+
+await loadMyProducts();
+
+}catch(e){
+
+alert(
+e.message
+);
+
+}
+
+resolve();
+
+};
+
+}
+
+);
+
+}
   }
 
   function renderCard(p) {
