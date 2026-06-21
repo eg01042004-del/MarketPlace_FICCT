@@ -29,7 +29,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const ui = {
     loginModal: $("loginModal"),
     sellModal: $("sellModal"),
-    deleteModal: $("deleteModal"), // Modal de confirmación
+    deleteModal: $("deleteModal"), // Vinculado al HTML
     authArea: $("authArea"),
     userMenu: $("userMenu"),   
     userName: $("userNameDisplay"),
@@ -37,15 +37,15 @@ document.addEventListener("DOMContentLoaded", () => {
     recentGrid: $("recentGrid"),
     myGrid: $("myListingsGrid"),
     searchInput: $("searchInput"),
+    searchBtn: $("searchBtn"),
     navLinks: document.querySelectorAll("[data-section]:not(.cat-tab)")
   };
 
-  // 1. CORRECCIÓN BUSCADOR: Iniciar vacío y sin interferencias
+  // --- 1. CORRECCIÓN BUSCADOR (Anti-Autofill y Limpieza) ---
   if (ui.searchInput) {
-    ui.searchInput.value = "";
-    ui.searchInput.autocomplete = "off";
-    ui.searchInput.readOnly = true; // Evita autofill inicial
-    setTimeout(() => ui.searchInput.readOnly = false, 500);
+    ui.searchInput.value = ""; 
+    ui.searchInput.setAttribute("autocomplete", "one-time-code");
+    ui.searchInput.setAttribute("name", "search_" + Math.random()); // Evita que Chrome asocie el campo al email
   }
 
   function render() {
@@ -104,6 +104,16 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   });
 
+  document.querySelectorAll(".tab-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+      document.querySelectorAll(".tab-panel").forEach(p => p.classList.remove("active"));
+
+      btn.classList.add("active");
+      document.getElementById(`tab-${btn.dataset.tab}`)?.classList.add("active");
+    });
+  });
+
   $("btnLogin")?.addEventListener("click", openLogin);
   $("modalClose")?.addEventListener("click", closeModals);
   $("sellModalClose")?.addEventListener("click", closeModals);
@@ -117,28 +127,61 @@ document.addEventListener("DOMContentLoaded", () => {
     render();
   });
 
-  // 4 y 5. CÁMARA E IMÁGENES: Mantener datos y procesar correctamente
+  $("btnEmailLogin")?.addEventListener("click", async () => {
+    try {
+      const email = $("loginEmail").value.trim();
+      const password = $("loginPassword").value.trim();
+      if (!email || !password) return alert("Coloca correo y contraseña.");
+      await login(email, password);
+      closeModals();
+      await loadProducts();
+    } catch (e) { alert("Error al ingresar: " + e.message); }
+  });
+
+  $("btnRegister")?.addEventListener("click", async () => {
+    try {
+      const email = $("regEmail").value.trim();
+      const password = $("regPassword").value.trim();
+      if (!email || !password) return alert("Coloca correo y contraseña.");
+      if (password.length < 6) return alert("Mínimo 6 caracteres.");
+      await registrar(email, password);
+      alert("Cuenta creada. Ahora inicia sesión.");
+    } catch (e) { alert("Error al registrar: " + e.message); }
+  });
+
+  $("userAvatarBtn")?.addEventListener("click", (e) => {
+    e.stopPropagation();
+    $("dropdownMenu")?.classList.toggle("open");
+  });
+
+  document.addEventListener("click", (e) => {
+    const menu = $("dropdownMenu");
+    const btn = $("userAvatarBtn");
+    if (menu && btn && !menu.contains(e.target) && !btn.contains(e.target)) {
+      menu.classList.remove("open");
+    }
+  });
+
+  // --- 4 & 5. CORRECCIÓN CÁMARA Y PUBLICACIÓN ---
   $("btnPublish")?.addEventListener("click", async (e) => {
-    e.preventDefault();
+    e.preventDefault(); // Evita recargas o cierres accidentales
     try {
       if (!state.user) return openLogin();
 
-      const btn = $("btnPublish");
-      const originalText = btn.textContent;
-      btn.textContent = "Procesando...";
-      btn.disabled = true;
+      const publishBtn = $("btnPublish");
+      publishBtn.disabled = true;
+      publishBtn.textContent = "Procesando...";
 
       let imagenFinal = $("prodImage").value.trim();
       const file = $("prodImageFile")?.files?.[0];
 
-      // Si hay archivo nuevo, subirlo, sino mantener URL actual
       if (file) {
         imagenFinal = await subirImagenProducto(file);
       }
 
       const producto = {
         nombre: $("prodName").value.trim(),
-        precio: Number($("prodPrice").value),
+        precio: $("prodPrice").value,
         categoria: $("prodCategory").value,
         estado: $("prodCondition").value,
         descripcion: $("prodDescription").value.trim(),
@@ -148,62 +191,77 @@ document.addEventListener("DOMContentLoaded", () => {
       };
 
       if (!producto.nombre || !producto.precio) {
-        throw new Error("Nombre y precio requeridos");
+        publishBtn.disabled = false;
+        publishBtn.textContent = state.editId ? "Guardar cambios" : "Publicar";
+        return alert("Coloca nombre y precio.");
       }
 
       if (state.editId) {
         await actualizarProducto(state.editId, producto);
+        alert("Producto actualizado");
       } else {
         await publicarProducto(producto);
+        alert("Producto publicado");
       }
 
       limpiarFormulario();
       closeModals();
       await loadProducts();
       await loadMyProducts();
+      state.section = "vender";
+      render();
+
     } catch (e) {
+      console.error(e);
       alert("Error: " + e.message);
     } finally {
       $("btnPublish").disabled = false;
-      $("btnPublish").textContent = state.editId ? "Guardar cambios" : "Publicar";
     }
   });
 
   observarAuth(async (user) => {
     state.user = user;
+    const msg = $("notLoggedSell");
     if (user) {
-      $("notLoggedSell")?.classList.add("hidden");
+      msg?.classList.add("hidden");
       await loadMyProducts();
     } else {
-      $("notLoggedSell")?.classList.remove("hidden");
+      msg?.classList.remove("hidden");
       state.myProducts = [];
     }
     render();
   });
 
-  // 2, 3 y 4. EVENTOS DE TARJETAS (EDITAR/ELIMINAR)
+  // --- 2, 3 & 4. CORRECCIÓN EDITAR, ELIMINAR Y TARJETAS ---
   document.addEventListener("click", (e) => {
     const editBtn = e.target.closest("[data-edit]");
     const deleteBtn = e.target.closest("[data-delete]");
     const card = e.target.closest(".product-card");
 
     if (editBtn) {
-      e.stopPropagation();
+      e.preventDefault();
+      e.stopPropagation(); // IMPORTANTE: No abre la tarjeta
       editarProducto(editBtn.dataset.edit);
       return;
     }
 
     if (deleteBtn) {
-      e.stopPropagation();
+      e.preventDefault();
+      e.stopPropagation(); // IMPORTANTE: No abre la tarjeta
       borrarProducto(deleteBtn.dataset.delete);
       return;
     }
 
     if (card && card.dataset.id) {
-      const p = state.products.find(x => String(x.id) === String(card.dataset.id)) || 
-                state.myProducts.find(x => String(x.id) === String(card.dataset.id));
+      if (e.target.closest(".product-actions")) return;
+      const p = [...state.products, ...state.myProducts].find(
+        x => String(x.id) === String(card.dataset.id)
+      );
       if (p) openProductModal(p);
+      return;
     }
+
+    if (e.target.id === "productModal") closeProductModal();
   });
 
   function editarProducto(id) {
@@ -224,56 +282,91 @@ document.addEventListener("DOMContentLoaded", () => {
     openSell();
   }
 
-  // 3. ELIMINAR: Sin alert, usando deleteModal
+  // --- 3. CORRECCIÓN ELIMINAR (deleteModal sin alert nativo) ---
   function borrarProducto(id) {
-    const dModal = $("deleteModal");
+    const dModal = ui.deleteModal;
+    const cancelBtn = $("cancelDelete");
+    const confirmBtn = $("confirmDelete");
+
     dModal.classList.remove("hidden");
 
-    $("confirmDelete").onclick = async () => {
+    cancelBtn.onclick = () => dModal.classList.add("hidden");
+
+    confirmBtn.onclick = async () => {
       try {
-        $("confirmDelete").disabled = true;
-        $("confirmDelete").textContent = "Eliminando...";
+        confirmBtn.disabled = true;
+        confirmBtn.textContent = "Eliminando...";
         await eliminarProducto(id);
         dModal.classList.add("hidden");
         await loadProducts();
         await loadMyProducts();
       } catch (e) {
-        console.error(e);
+        alert("Error al eliminar");
       } finally {
-        $("confirmDelete").disabled = false;
-        $("confirmDelete").textContent = "Eliminar";
+        confirmBtn.disabled = false;
+        confirmBtn.textContent = "Eliminar";
       }
     };
-
-    $("cancelDelete").onclick = () => dModal.classList.add("hidden");
   }
 
-  // BUSCADOR: Solo ejecuta cuando se solicita
+  // --- BUSCADOR (Lógica de filtrado) ---
   function filtrarBusqueda() {
-    const texto = $("searchInput").value.toLowerCase().trim();
-    if (!texto) {
-        loadProducts();
-        return;
-    }
-    const res = state.products.filter(p => 
-      p.nombre.toLowerCase().includes(texto) || 
-      p.categoria.toLowerCase().includes(texto)
+    const texto = ui.searchInput?.value.toLowerCase().trim() || "";
+    if (texto === "") return loadProducts();
+
+    const resultados = state.products.filter(p =>
+      (p.nombre || "").toLowerCase().includes(texto) ||
+      (p.categoria || "").toLowerCase().includes(texto)
     );
-    if (ui.buyGrid) ui.buyGrid.innerHTML = res.map(renderCard).join("");
+
     state.section = "comprar";
+    if (ui.buyGrid) {
+      ui.buyGrid.innerHTML = resultados.length
+        ? resultados.map(renderCard).join("")
+        : `<p class="no-products">No se encontraron productos.</p>`;
+    }
     render();
   }
 
-  $("searchBtn")?.addEventListener("click", filtrarBusqueda);
+  ui.searchBtn?.addEventListener("click", filtrarBusqueda);
   ui.searchInput?.addEventListener("keypress", (e) => {
     if (e.key === "Enter") filtrarBusqueda();
   });
 
+  // --- PRODUCT MODAL LÓGICA ---
+  const productModal = $("productModal");
+  function openProductModal(p) {
+    state.selectedProduct = p;
+    $("modalImg").src = p.imagen || "https://via.placeholder.com/400";
+    $("modalTitle").textContent = p.nombre || "";
+    $("modalPrice").textContent = `Bs ${p.precio || 0}`;
+    $("modalDesc").textContent = p.descripcion || "Sin descripción";
+    $("modalCat").textContent = p.categoria || "-";
+    $("modalState").textContent = p.estado || "-";
+    $("modalUb").textContent = p.ubicacion || "-";
+    productModal?.classList.remove("hidden");
+    productModal?.classList.add("show");
+  }
+
+  function closeProductModal() {
+    productModal?.classList.remove("show");
+    setTimeout(() => productModal?.classList.add("hidden"), 200);
+  }
+  $("closeProductModal")?.addEventListener("click", closeProductModal);
+
+  $("contactSellerBtn")?.addEventListener("click", () => {
+    if (!state.selectedProduct?.telefono) return alert("Sin teléfono");
+    const tel = state.selectedProduct.telefono.replace(/\D/g, "");
+    window.open(`https://wa.me/${tel}?text=Hola, me interesa tu producto: ${state.selectedProduct.nombre}`, "_blank");
+  });
+
   async function loadProducts() {
-    const data = await obtenerProductos();
-    state.products = data || [];
-    if (ui.buyGrid) ui.buyGrid.innerHTML = state.products.map(renderCard).join("");
-    if (ui.recentGrid) ui.recentGrid.innerHTML = state.products.slice(0, 6).map(renderCard).join("");
+    try {
+      const data = await obtenerProductos();
+      state.products = data || [];
+      if (ui.buyGrid) ui.buyGrid.innerHTML = state.products.map(renderCard).join("");
+      if (ui.recentGrid) ui.recentGrid.innerHTML = state.products.slice(0, 6).map(renderCard).join("");
+    } catch (err) { console.error(err); }
   }
 
   async function loadMyProducts() {
@@ -289,29 +382,42 @@ document.addEventListener("DOMContentLoaded", () => {
       <div class="product-card" data-id="${p.id}">
         <img class="product-img" src="${p.imagen || 'https://via.placeholder.com/300'}" onerror="this.src='https://via.placeholder.com/300'">
         <div class="product-info">
-          <div class="product-category">${p.categoria}</div>
-          <div class="product-title">${p.nombre}</div>
-          <div class="product-price">Bs ${p.precio}</div>
-          <div class="product-meta"><span>📍 ${p.ubicacion}</span></div>
+          <div class="product-category">${p.categoria || "General"}</div>
+          <div class="product-title">${p.nombre || "Sin nombre"}</div>
+          <div class="product-price">Bs ${p.precio || 0}</div>
+          <div class="product-meta"><span>📍 ${p.ubicacion || "Bolivia"}</span></div>
           ${isMine ? `
-            <div class="product-actions">
-              <button class="btn-edit" data-edit="${p.id}">Editar</button>
-              <button class="btn-delete" data-delete="${p.id}">Eliminar</button>
-            </div>` : ""}
+              <div class="product-actions">
+                <button type="button" class="btn-edit" data-edit="${p.id}">Editar</button>
+                <button type="button" class="btn-delete" data-delete="${p.id}">Eliminar</button>
+              </div>` : ""
+          }
         </div>
       </div>`;
   }
 
   function limpiarFormulario() {
+    $("prodName").value = ""; $("prodPrice").value = ""; $("prodDescription").value = "";
+    $("prodLocation").value = "Santa Cruz, Bolivia"; $("prodImage").value = ""; $("prodPhone").value = "";
+    if ($("prodImageFile")) $("prodImageFile").value = "";
     state.editId = null;
-    $("prodName").value = "";
-    $("prodPrice").value = "";
-    $("prodDescription").value = "";
-    $("prodImage").value = "";
-    $("prodImageFile").value = "";
-    $("prodPhone").value = "";
     $("btnPublish").textContent = "Publicar";
   }
+
+  // --- SIDEBAR ---
+  const sidebar = $("sidebar");
+  const overlay = $("sidebarOverlay");
+  $("hamburgerBtn")?.addEventListener("click", (e) => {
+    e.stopPropagation();
+    sidebar?.classList.toggle("open");
+    overlay?.classList.toggle("hidden");
+    overlay?.classList.toggle("visible");
+  });
+  overlay?.addEventListener("click", () => {
+    sidebar?.classList.remove("open");
+    overlay?.classList.add("hidden");
+    overlay?.classList.remove("visible");
+  });
 
   loadProducts();
   setSection("home");
