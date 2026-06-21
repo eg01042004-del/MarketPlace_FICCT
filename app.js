@@ -39,7 +39,9 @@ document.addEventListener("DOMContentLoaded", () => {
     myGrid: $("myListingsGrid"),
     searchInput: $("searchInput"),
     searchBtn: $("searchBtn"),
-    navLinks: document.querySelectorAll("[data-section]:not(.cat-tab)")
+    navLinks: document.querySelectorAll(
+  ".brand[data-section], .sidebar-item[data-section], .nav-link:not(.cat-tab)[data-section], .sell-hero [data-section]"
+)
   };
 
   if (ui.searchInput) {
