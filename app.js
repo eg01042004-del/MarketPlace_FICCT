@@ -1,309 +1,583 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>FICCT Market</title>
-  <link rel="stylesheet" href="./style.css" />
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Sora:wght@400;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
-</head>
-<body>
+import {
+  registrar,
+  login,
+  logout,
+  observarAuth
+} from "./auth.js";
 
-<nav class="navbar" id="navbar">
-  <div class="nav-left">
-    <button class="hamburger" id="hamburgerBtn">
-      <i class="fas fa-bars"></i>
-    </button>
+import {
+  publicarProducto,
+  obtenerProductos,
+  obtenerMisProductos,
+  actualizarProducto,
+  eliminarProducto,
+  subirImagenProducto
+} from "./productos.js";
 
-    <div class="auth-area" id="authArea">
-      <button class="btn-login" id="btnLogin">
-        <i class="fas fa-sign-in-alt"></i> Ingresar
-      </button>
-    </div>
+document.addEventListener("DOMContentLoaded", () => {
+  const state = {
+    user: null,
+    modal: { login: false, sell: false },
+    section: "home",
+    products: [],
+    myProducts: [],
+    editId: null
+  };
 
-    <div class="user-menu hidden" id="userMenu">
-      <button class="user-avatar-btn" id="userAvatarBtn">
-        <img src="https://ui-avatars.com/api/?name=User&background=6366f1&color=fff" class="user-avatar" id="userAvatarImg">
-        <span class="user-name" id="userNameDisplay">Usuario</span>
-        <i class="fas fa-chevron-down"></i>
-      </button>
+  const $ = (id) => document.getElementById(id);
 
-      <div class="dropdown-menu" id="dropdownMenu">
-        <a href="#" class="dropdown-item">
-          <i class="fas fa-user"></i> Mi Perfil
-        </a>
-        <a href="#" class="dropdown-item" data-section="vender">
-          <i class="fas fa-box"></i> Mis productos
-        </a>
-        <hr>
-        <a href="#" class="dropdown-item danger" id="btnLogout">
-          <i class="fas fa-sign-out-alt"></i> Cerrar Sesión
-        </a>
-      </div>
-    </div>
+  const ui = {
+    loginModal: $("loginModal"),
+    sellModal: $("sellModal"),
+    authArea: $("authArea"),
+    userMenu: $("userMenu"),
+    userName: $("userNameDisplay"),
+    buyGrid: $("buyGrid"),
+    recentGrid: $("recentGrid"),
+    myGrid: $("myListingsGrid"),
+    // Seleccionamos enlaces generales de navegación que NO son pestañas de categorías
+    navLinks: document.querySelectorAll("[data-section]:not(.cat-tab)")
+  };
 
-    <a href="#" class="brand" data-section="home">
-      <span class="brand-icon"><i class="fas fa-store"></i></span>
-      <span class="brand-name">FICCT<span class="brand-accent">Market</span></span>
-    </a>
-  </div>
+  function render() {
+    ui.loginModal?.classList.toggle("hidden", !state.modal.login);
+    ui.sellModal?.classList.toggle("hidden", !state.modal.sell);
 
-  <div class="nav-center">
-    <div class="search-bar">
-      <i class="fas fa-search search-icon"></i>
-      <input type="text" id="searchInput" placeholder="Buscar productos..." autocomplete="off">
-      <button class="search-btn" id="searchBtn">Buscar</button>
-    </div>
-  </div>
+    if (state.user) {
+      ui.authArea?.classList.add("hidden");
+      ui.userMenu?.classList.remove("hidden");
+      if (ui.userName) ui.userName.textContent = state.user.email.split("@")[0];
+    } else {
+      ui.authArea?.classList.remove("hidden");
+      ui.userMenu?.classList.add("hidden");
+    }
 
-  <div class="nav-right">
-    <nav class="nav-links">
-      <a href="#" class="nav-link active cat-tab" data-category="Todos" data-section="comprar">▦ Todos</a>
-      <a href="#" class="nav-link cat-tab" data-category="Libros" data-section="comprar">📚 Libros</a>
-      <a href="#" class="nav-link cat-tab" data-category="Herramientas" data-section="comprar">🛠️ Herramientas</a>
-      <a href="#" class="nav-link cat-tab" data-category="Tutorías" data-section="comprar">🎓 Tutorías</a>
-      <a href="#" class="nav-link cat-tab" data-category="Trueque" data-section="comprar">🔁 Trueque</a>
-      <a href="#" class="nav-link cat-tab" data-category="Donaciones" data-section="comprar">🎁 Donaciones</a>
-      <a href="#" class="nav-link cat-tab" data-category="Ropa y Moda" data-section="comprar">👕 Ropa</a>
-      <a href="#" class="nav-link cat-tab" data-category="Se Busca" data-section="comprar">🔍 Se Busca</a>
-      <a href="#" class="nav-link" data-section="vender">📦 Mis productos</a>
-    </nav>
-  </div>
-</nav>
+    document.querySelectorAll(".section").forEach(s => {
+      s.classList.add("hidden");
+      s.classList.remove("active");
+    });
 
-<div class="modal-overlay hidden" id="loginModal">
-  <div class="modal-card">
-    <button class="modal-close" id="modalClose"><i class="fas fa-times"></i></button>
+    const active = document.getElementById(`section-${state.section}`);
+    active?.classList.remove("hidden");
+    active?.classList.add("active");
+  }
 
-    <div class="modal-header">
-      <div class="modal-logo"><i class="fas fa-store"></i></div>
-      <h2>FICCT Market</h2>
-    </div>
+  function openLogin() {
+    state.modal.login = true;
+    state.modal.sell = false;
+    render();
+  }
 
-    <div class="modal-body">
-      <div class="tab-group">
-        <button class="tab-btn active" data-tab="login">Login</button>
-        <button class="tab-btn" data-tab="register">Registro</button>
-      </div>
+  function openSell() {
+    if (!state.user) return openLogin();
+    state.modal.sell = true;
+    state.modal.login = false;
+    render();
+  }
 
-      <div class="tab-panel active" id="tab-login">
-        <div class="form-group">
-          <input type="email" id="loginEmail" placeholder="Correo">
+  function closeModals() {
+    state.modal.login = false;
+    state.modal.sell = false;
+    render();
+  }
+
+  async function setSection(sec) {
+    state.section = sec;
+    if (sec === "comprar") await loadProducts();
+    if (sec === "vender") await loadMyProducts();
+    render();
+  }
+
+  // Listener para cambiar de secciones principales (sin duplicarse con cat-tabs)
+  ui.navLinks.forEach(link => {
+    link.addEventListener("click", async (e) => {
+      e.preventDefault();
+      await setSection(link.dataset.section);
+    });
+  });
+
+  // Tabs de Login y Registro dentro del Modal de Auth
+  document.querySelectorAll(".tab-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+      document.querySelectorAll(".tab-panel").forEach(p => p.classList.remove("active"));
+      btn.classList.add("active");
+      document.getElementById(`tab-${btn.dataset.tab}`)?.classList.add("active");
+    });
+  });
+
+  $("btnLogin")?.addEventListener("click", openLogin);
+  $("modalClose")?.addEventListener("click", closeModals);
+  $("sellModalClose")?.addEventListener("click", closeModals);
+  $("btnOpenSell")?.addEventListener("click", openSell);
+
+  $("btnLogout")?.addEventListener("click", async () => {
+    await logout();
+    state.user = null;
+    state.myProducts = [];
+    $("dropdownMenu")?.classList.remove("open");
+    render();
+  });
+
+  $("btnEmailLogin")?.addEventListener("click", async () => {
+    try {
+      await login($("loginEmail").value.trim(), $("loginPassword").value.trim());
+      closeModals();
+      await loadProducts();
+    } catch (e) {
+      alert(e.message);
+    }
+  });
+
+  $("btnRegister")?.addEventListener("click", async () => {
+    try {
+      const email = $("regEmail").value.trim();
+      const password = $("regPassword").value.trim();
+
+      if (!email || !password) {
+        alert("Colaca correo y contraseña.");
+        return;
+      }
+
+      if (password.length < 6) {
+        alert("La contraseña debe tener mínimo 6 caracteres.");
+        return;
+      }
+
+      await registrar(email, password);
+      alert("Cuenta creada. Ahora inicia sesión.");
+    } catch (e) {
+      alert("Error al registrar: " + e.message);
+    }
+  });
+
+  $("userAvatarBtn")?.addEventListener("click", (e) => {
+    e.stopPropagation();
+    $("dropdownMenu")?.classList.toggle("open");
+  });
+
+  document.addEventListener("click", (e) => {
+    const menu = $("dropdownMenu");
+    const btn = $("userAvatarBtn");
+
+    if (menu && btn && !menu.contains(e.target) && !btn.contains(e.target)) {
+      menu.classList.remove("open");
+    }
+  });
+
+  $("btnPublish")?.addEventListener("click", async () => {
+    try {
+      if (!state.user) return openLogin();
+
+      let imagenFinal = $("prodImage").value;
+      const file = $("prodImageFile")?.files?.[0];
+
+      if (file) imagenFinal = await subirImagenProducto(file);
+
+      const producto = {
+        nombre: $("prodName").value,
+        precio: $("prodPrice").value,
+        categoria: $("prodCategory").value,
+        estado: $("prodCondition").value,
+        descripcion: $("prodDescription").value,
+        ubicacion: $("prodLocation").value,
+        imagen: imagenFinal,
+        telefono: $("prodPhone").value
+      };
+
+      if (state.editId) {
+        await actualizarProducto(state.editId, producto);
+        alert("Producto actualizado");
+      } else {
+        await publicarProducto(producto);
+        alert("Producto publicado");
+      }
+
+      limpiarFormulario();
+      sessionStorage.removeItem("editandoProducto");
+      closeModals();
+      await loadProducts();
+      await loadMyProducts();
+      state.section = "vender";
+      render();
+
+    } catch (e) {
+      console.error(e);
+      alert("Error: " + e.message);
+    }
+  });
+
+  observarAuth(async (user) => {
+    state.user = user;
+    const msg = $("notLoggedSell");
+
+    if (user) {
+      msg?.classList.add("hidden");
+      await loadMyProducts();
+    } else {
+      msg?.classList.remove("hidden");
+      state.myProducts = [];
+    }
+    const editandoGuardado = sessionStorage.getItem("editandoProducto");
+
+if (editandoGuardado) {
+  setTimeout(() => {
+    editarProducto(editandoGuardado);
+  }, 500);
+}
+    render();
+  });
+
+  const productModal = $("productModal");
+  const modalImg = $("modalImg");
+  const modalTitle = $("modalTitle");
+  const modalPrice = $("modalPrice");
+  const modalDesc = $("modalDesc");
+  const modalCat = $("modalCat");
+  const modalState = $("modalState");
+  const modalUb = $("modalUb");
+  const btnContact = $("contactSellerBtn");
+
+  let selectedProduct = null;
+
+  function openProductModal(p) {
+    selectedProduct = p;
+    if (modalImg) modalImg.src = p.imagen || "https://via.placeholder.com/400";
+    if (modalTitle) modalTitle.textContent = p.nombre || "";
+    if (modalPrice) modalPrice.textContent = `Bs ${p.precio || 0}`;
+    if (modalDesc) modalDesc.textContent = p.descripcion || "Sin descripción";
+    if (modalCat) modalCat.textContent = p.categoria || "-";
+    if (modalState) modalState.textContent = p.estado || "-";
+    if (modalUb) modalUb.textContent = p.ubicacion || "-";
+
+    productModal?.classList.remove("hidden");
+    productModal?.classList.add("show");
+  }
+
+  function closeProductModal() {
+    productModal?.classList.remove("show");
+    setTimeout(() => productModal?.classList.add("hidden"), 200);
+    selectedProduct = null;
+  }
+
+  // Delegación de Eventos Inteligente y Centralizada para Productos
+  document.addEventListener("click", (e) => {
+    const editBtn = e.target.closest("[data-edit]");
+    const deleteBtn = e.target.closest("[data-delete]");
+
+    if (editBtn) {
+      e.stopPropagation();
+      editarProducto(editBtn.dataset.edit);
+      return;
+    }
+
+    if (deleteBtn) {
+      e.stopPropagation();
+      borrarProducto(deleteBtn.dataset.delete);
+      return;
+    }
+
+    const card = e.target.closest(".product-card");
+
+    if (card && card.dataset.id) {
+      // Prevención de apertura de modal si el click fue en botones internos de edición o eliminación
+      if (e.target.closest(".btn-edit") || e.target.closest(".btn-delete")) {
+        return;
+      }
+      const p = state.products.find(x => String(x.id) === String(card.dataset.id));
+      if (p) openProductModal(p);
+      return;
+    }
+
+    if (e.target.id === "productModal") closeProductModal();
+  });
+
+  $("closeProductModal")?.addEventListener("click", closeProductModal);
+
+  btnContact?.addEventListener("click", () => {
+    if (!selectedProduct) return;
+
+    const tel = selectedProduct.telefono;
+    if (!tel) return alert("El vendedor no dejó número de contacto");
+
+    const cleanTel = tel.replace(/\D/g, "");
+    const msg = encodeURIComponent(`Hola, vi tu producto "${selectedProduct.nombre}" en FICCT Market y estoy interesado.`);
+    window.open(`https://wa.me/${cleanTel}?text=${msg}`, "_blank");
+  });
+
+  async function loadProducts() {
+    try {
+      const data = await obtenerProductos();
+      state.products = data || [];
+
+      if (ui.buyGrid) {
+        ui.buyGrid.innerHTML = state.products.length
+          ? state.products.map(renderCard).join("")
+          : `<p class="no-products">No hay productos disponibles.</p>`;
+      }
+
+      if (ui.recentGrid) {
+        ui.recentGrid.innerHTML = state.products.length
+          ? state.products.slice(0, 6).map(renderCard).join("")
+          : `<p class="no-products">No hay productos disponibles.</p>`;
+      }
+
+    } catch (err) {
+      console.error(err);
+      if (ui.buyGrid) ui.buyGrid.innerHTML = `<p>Error cargando productos</p>`;
+      if (ui.recentGrid) ui.recentGrid.innerHTML = `<p>Error cargando productos</p>`;
+    }
+  }
+
+  async function loadMyProducts() {
+    if (!state.user) {
+      if (ui.myGrid) ui.myGrid.innerHTML = "";
+      return;
+    }
+
+    const data = await obtenerMisProductos();
+    state.myProducts = data || [];
+
+    if (ui.myGrid) {
+      ui.myGrid.innerHTML = state.myProducts.length
+        ? state.myProducts.map(renderCard).join("")
+        : `<p class="no-products">No tienes productos publicados.</p>`;
+    }
+  }
+
+  function limpiarFormulario() {
+    $("prodName").value = "";
+    $("prodPrice").value = "";
+    $("prodDescription").value = "";
+    $("prodLocation").value = "Santa Cruz, Bolivia";
+    $("prodImage").value = "";
+    $("prodPhone").value = "";
+    if ($("prodImageFile")) $("prodImageFile").value = "";
+    state.editId = null;
+    if ($("btnPublish")) $("btnPublish").textContent = "Publicar";
+  }
+
+  function editarProducto(id) {
+    const p = state.myProducts.find(x => String(x.id) === String(id));
+    if (!p) return;
+
+    state.editId = p.id;
+
+    $("prodName").value = p.nombre || "";
+    $("prodPrice").value = p.precio || "";
+    $("prodCategory").value = p.categoria || "Libros";
+    $("prodCondition").value = p.estado || "Usado";
+    $("prodDescription").value = p.descripcion || "";
+    $("prodLocation").value = p.ubicacion || "";
+    $("prodImage").value = p.imagen || "";
+    $("prodPhone").value = p.telefono || "";
+
+    $("btnPublish").textContent = "Guardar cambios";
+    openSell();
+    sessionStorage.setItem("editandoProducto", String(p.id));
+  }
+
+  async function borrarProducto(id) {
+   async function borrarProducto(id){
+
+const modal=
+document.getElementById(
+"deleteModal"
+);
+
+modal.classList.remove(
+"hidden"
+);
+
+return new Promise(
+
+(resolve)=>{
+
+document
+.getElementById(
+"cancelDelete"
+)
+
+.onclick=()=>{
+
+modal.classList.add(
+"hidden"
+);
+
+resolve();
+
+};
+
+document
+.getElementById(
+"confirmDelete"
+)
+
+.onclick=async()=>{
+
+modal.classList.add(
+"hidden"
+);
+
+try{
+
+await eliminarProducto(
+id
+);
+
+alert(
+"Producto eliminado"
+);
+
+await loadProducts();
+
+await loadMyProducts();
+
+}catch(e){
+
+alert(
+e.message
+);
+
+}
+
+resolve();
+
+};
+
+}
+
+);
+
+}
+  }
+
+  function renderCard(p) {
+    const isMine = state.user && p.user_id === state.user.id;
+
+    return `
+      <div class="product-card" data-id="${p.id}">
+        <img class="product-img"
+          src="${p.imagen || 'https://via.placeholder.com/300'}"
+          onerror="this.src='https://via.placeholder.com/300'">
+
+        <div class="product-info">
+          <div class="product-category">${p.categoria || "General"}</div>
+          <div class="product-title">${p.nombre || "Sin nombre"}</div>
+          <div class="product-price">Bs ${p.precio || 0}</div>
+          <div class="product-meta"><span>📍 ${p.ubicacion || "Bolivia"}</span></div>
+
+          ${isMine ? `
+            <div class="product-actions">
+              <button class="btn-edit" data-edit="${p.id}">Editar</button>
+              <button class="btn-delete" data-delete="${p.id}">Eliminar</button>
+            </div>
+          ` : ""}
         </div>
-        <div class="form-group">
-          <input type="password" id="loginPassword" placeholder="Contraseña">
-        </div>
-        <button class="btn-primary full-width" id="btnEmailLogin">Entrar</button>
       </div>
+    `;
+  }
 
-      <div class="tab-panel" id="tab-register">
-        <div class="form-group">
-          <input type="text" id="regName" placeholder="Nombre">
-        </div>
-        <div class="form-group">
-          <input type="email" id="regEmail" placeholder="Correo">
-        </div>
-        <div class="form-group">
-          <input type="password" id="regPassword" placeholder="Contraseña">
-        </div>
-        <button class="btn-primary full-width" id="btnRegister">Crear Cuenta</button>
-      </div>
-    </div>
-  </div>
-</div>
+  // Filtrado por Categorías (Tabs superiores)
+  document.querySelectorAll(".cat-tab").forEach(btn => {
+    btn.addEventListener("click", async (e) => {
+      e.preventDefault();
+      document.querySelectorAll(".cat-tab").forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
 
-<div class="modal-overlay hidden" id="sellModal">
-  <div class="modal-card modal-wide">
-    <button class="modal-close" id="sellModalClose">
-      <i class="fas fa-times"></i>
-    </button>
+      await loadProducts();
 
-    <div class="modal-body">
-      <h2>Publicar Producto</h2>
+      const categoria = btn.dataset.category;
+      const filtrados = categoria === "Todos"
+        ? state.products
+        : state.products.filter(p => p.categoria === categoria);
 
-      <div class="form-row">
-        <div class="form-group">
-          <label>Nombre</label>
-          <input type="text" id="prodName">
-        </div>
-        <div class="form-group">
-          <label>Precio (Bs)</label>
-          <input type="number" id="prodPrice">
-        </div>
-      </div>
+      if (ui.buyGrid) {
+        ui.buyGrid.innerHTML = filtrados.length
+          ? filtrados.map(renderCard).join("")
+          : `<p class="no-products">No hay productos en esta categoría.</p>`;
+      }
 
-      <div class="form-row">
-        <div class="form-group">
-          <label>Categoría</label>
-          <select id="prodCategory">
-            <option value="Libros">📚 Libros</option>
-            <option value="Herramientas">🛠️ Herramientas</option>
-            <option value="Tutorías">🎓 Tutorías</option>
-            <option value="Trueque">🔁 Trueque</option>
-            <option value="Donaciones">🎁 Donaciones</option>
-            <option value="Ropa y Moda">👕 Ropa</option>
-            <option value="Se Busca">🔍 Se Busca</option>
-          </select>
-        </div>
+      state.section = "comprar";
+      render();
+    });
+  });
 
-        <div class="form-group">
-          <label>Estado</label>
-          <select id="prodCondition">
-            <option>Nuevo</option>
-            <option>Usado</option>
-          </select>
-        </div>
-      </div>
+  // Filtro de búsqueda en tiempo real
+  function filtrarBusqueda() {
+    const texto = $("searchInput")?.value.toLowerCase().trim() || "";
 
-      <div class="form-group">
-        <label>Descripción</label>
-        <textarea id="prodDescription"></textarea>
-      </div>
+    const resultados = state.products.filter(p =>
+      (p.nombre || "").toLowerCase().includes(texto) ||
+      (p.descripcion || "").toLowerCase().includes(texto) ||
+      (p.categoria || "").toLowerCase().includes(texto) ||
+      (p.ubicacion || "").toLowerCase().includes(texto)
+    );
 
-      <div class="form-group">
-        <label>Ubicación</label>
-        <input type="text" id="prodLocation" value="Santa Cruz, Bolivia">
-      </div>
+    state.section = "comprar";
 
-      <div class="form-group">
-        <label>Teléfono (WhatsApp)</label>
-        <input type="text" id="prodPhone" placeholder="+59171234567">
-      </div>
+    if (ui.buyGrid) {
+      ui.buyGrid.innerHTML = resultados.length
+        ? resultados.map(renderCard).join("")
+        : `<p class="no-products">No se encontraron productos.</p>`;
+    }
 
-      <div class="form-group">
-        <label>URL Imagen (opcional)</label>
-        <input type="url" id="prodImage" placeholder="https://...">
-      </div>
+    render();
+  }
 
-      <div class="form-group">
-        <label>Subir imagen o tomar foto</label>
-       <input type="file" id="prodImageFile" accept="image/*">
-      </div>
+  $("searchBtn")?.addEventListener("click", async () => {
+    await loadProducts();
+    filtrarBusqueda();
+  });
 
-      <button class="btn-primary full-width" id="btnPublish">
-        Publicar
-      </button>
-    </div>
-  </div>
-</div>
+  $("searchInput")?.addEventListener("keyup", async (e) => {
+    if (e.key === "Enter") {
+      await loadProducts();
+      filtrarBusqueda();
+    }
+  });
 
-<div class="layout">
-  <aside class="sidebar" id="sidebar">
-    <ul class="sidebar-menu">
-      <li>
-        <a href="#" class="sidebar-item active" data-section="home">
-          <i class="fas fa-home"></i> Inicio
-        </a>
-      </li>
-      <li>
-        <a href="#" class="sidebar-item" data-section="comprar">
-          <i class="fas fa-shopping-cart"></i> Comprar
-        </a>
-      </li>
-      <li>
-        <a href="#" class="sidebar-item" data-section="vender">
-          <i class="fas fa-tag"></i> Vender
-        </a>
-      </li>
-    </ul>
-  </aside>
+  $("searchInput")?.addEventListener("input", () => {
+    filtrarBusqueda();
+  });
 
-  <div class="sidebar-overlay hidden" id="sidebarOverlay"></div>
+  // SIDEBAR - Menú lateral para celulares/PC
+  const sidebar = $("sidebar");
+  const overlay = $("sidebarOverlay");
+  const hamburger = $("hamburgerBtn");
 
-  <main class="main-content">
-    <section class="section active" id="section-home">
-      <div class="hero-banner">
-        <div class="hero-text">
-          <h1>Compra y vende <span class="hero-highlight">en la FICCT</span></h1>
-          <button class="btn-primary" data-section="comprar">Explorar</button>
-        </div>
-      </div>
+  function openSidebar() {
+    sidebar?.classList.add("open");
+    overlay?.classList.remove("hidden");
+    overlay?.classList.add("visible");
+  }
 
-      <div class="section-header">
-        <h2>Productos Recientes</h2>
-      </div>
+  function closeSidebar() {
+    sidebar?.classList.remove("open");
+    overlay?.classList.remove("visible");
+    overlay?.classList.add("hidden");
+  }
 
-      <div class="products-grid" id="recentGrid"></div>
-    </section>
+  hamburger?.addEventListener("click", (e) => {
+    e.preventDefault();
+    e.stopPropagation();
 
-    <section class="section hidden" id="section-comprar">
-      <div class="section-header">
-        <h2>Marketplace</h2>
-      </div>
-      <div class="products-grid" id="buyGrid"></div>
-    </section>
+    sidebar?.classList.contains("open")
+      ? closeSidebar()
+      : openSidebar();
+  });
 
-    <section class="section hidden" id="section-vender">
-      <div class="sell-hero">
-        <h2>Mis productos</h2>
-        <p>Aquí puedes editar o eliminar tus publicaciones.</p>
-        <button class="btn-primary large" id="btnOpenSell">Publicar Producto</button>
-      </div>
+  overlay?.addEventListener("click", closeSidebar);
 
-      <div id="notLoggedSell" class="not-logged-sell hidden">
-        Debes iniciar sesión para gestionar tus ventas.
-      </div>
+  // Cerrar sidebar al hacer click en opciones del sidebar en celular
+  document.querySelectorAll(".sidebar-item").forEach(item => {
+    item.addEventListener("click", () => {
+      closeSidebar();
+    });
+  });
 
-      <div class="products-grid" id="myListingsGrid"></div>
-    </section>
-  </main>
-</div>
-
-<div id="productModal" class="product-modal hidden">
-  <div class="product-modal-content">
-    <button id="closeProductModal" class="modal-close">✕</button>
-
-    <img id="modalImg" class="modal-img" />
-
-    <div class="modal-body">
-      <h2 id="modalTitle"></h2>
-      <p id="modalPrice" class="product-price" style="margin-top: 8px; margin-bottom: 8px;"></p>
-      <p id="modalDesc" style="color: var(--text-secondary); line-height: 1.5; margin-bottom: 16px;"></p>
-
-      <div class="modal-meta">
-        <span id="modalCat"></span>
-        <span id="modalState"></span>
-        <span id="modalUb"></span>
-      </div>
-
-      <button id="contactSellerBtn" class="btn-primary full-width">
-        <i class="fab fa-whatsapp"></i> Contactar vendedor
-      </button>
-    </div>
-  </div>
-</div>
-
-<script type="module" src="./app.js"></script> 
-<!-- MODAL ELIMINAR -->
-
-<div id="deleteModal" class="delete-modal hidden">
-
-<div class="delete-box">
-
-<h3>Eliminar producto</h3>
-
-<p>
-Esta acción eliminará el producto permanentemente.
-</p>
-
-<div class="delete-actions">
-
-<button id="cancelDelete">
-Cancelar
-</button>
-
-<button id="confirmDelete">
-Eliminar
-</button>
-
-</div>
-
-</div>
-
-</div>
-</body>
-</html>
- 
+  // Inicialización de la aplicación
+  loadProducts();
+  setSection("home");
+  render();
+});
