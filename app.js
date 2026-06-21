@@ -377,7 +377,7 @@ if (editandoGuardado) {
     sessionStorage.setItem("editandoProducto", String(p.id));
   }
 
-  async function borrarProducto(id) {
+  
    async function borrarProducto(id){
 
 const modal=
@@ -450,7 +450,6 @@ resolve();
 );
 
 }
-  }
 
   function renderCard(p) {
     const isMine = state.user && p.user_id === state.user.id;
