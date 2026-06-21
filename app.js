@@ -194,6 +194,7 @@ document.addEventListener("DOMContentLoaded", () => {
       }
 
       limpiarFormulario();
+      sessionStorage.removeItem("editandoProducto");
       closeModals();
       await loadProducts();
       await loadMyProducts();
@@ -217,7 +218,13 @@ document.addEventListener("DOMContentLoaded", () => {
       msg?.classList.remove("hidden");
       state.myProducts = [];
     }
+    const editandoGuardado = sessionStorage.getItem("editandoProducto");
 
+if (editandoGuardado) {
+  setTimeout(() => {
+    editarProducto(editandoGuardado);
+  }, 500);
+}
     render();
   });
 
@@ -367,6 +374,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     $("btnPublish").textContent = "Guardar cambios";
     openSell();
+    sessionStorage.setItem("editandoProducto", String(p.id));
   }
 
   async function borrarProducto(id) {
