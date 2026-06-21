@@ -4,6 +4,7 @@ import {
   logout,
   observarAuth
 } from "./auth.js";
+
 import {
   publicarProducto,
   obtenerProductos,
@@ -28,9 +29,9 @@ document.addEventListener("DOMContentLoaded", () => {
   const ui = {
     loginModal: $("loginModal"),
     sellModal: $("sellModal"),
-    deleteModal: $("deleteModal"),
+    deleteModal: $("deleteModal"), // Modal de confirmación
     authArea: $("authArea"),
-    userMenu: $("userMenu"),
+    userMenu: $("userMenu"),   
     userName: $("userNameDisplay"),
     buyGrid: $("buyGrid"),
     recentGrid: $("recentGrid"),
@@ -39,11 +40,12 @@ document.addEventListener("DOMContentLoaded", () => {
     navLinks: document.querySelectorAll("[data-section]:not(.cat-tab)")
   };
 
-  // 1. BUSCADOR: Limpieza total de autocompletado y valores iniciales
+  // 1. CORRECCIÓN BUSCADOR: Iniciar vacío y sin interferencias
   if (ui.searchInput) {
-    ui.searchInput.value = ""; 
-    ui.searchInput.setAttribute("autocomplete", "off");
-    ui.searchInput.setAttribute("name", "search_" + Math.random().toString(36).slice(2));
+    ui.searchInput.value = "";
+    ui.searchInput.autocomplete = "off";
+    ui.searchInput.readOnly = true; // Evita autofill inicial
+    setTimeout(() => ui.searchInput.readOnly = false, 500);
   }
 
   function render() {
@@ -115,39 +117,28 @@ document.addEventListener("DOMContentLoaded", () => {
     render();
   });
 
-  $("btnEmailLogin")?.addEventListener("click", async () => {
-    try {
-      const email = $("loginEmail").value.trim();
-      const password = $("loginPassword").value.trim();
-      if (!email || !password) return;
-      await login(email, password);
-      closeModals();
-      await loadProducts();
-    } catch (e) {
-      alert("Error: " + e.message);
-    }
-  });
-
-  // 4. CÁMARA Y PUBLICACIÓN: Gestión de imagen sin cerrar formulario
-  $("btnPublish")?.addEventListener("click", async () => {
+  // 4 y 5. CÁMARA E IMÁGENES: Mantener datos y procesar correctamente
+  $("btnPublish")?.addEventListener("click", async (e) => {
+    e.preventDefault();
     try {
       if (!state.user) return openLogin();
 
       const btn = $("btnPublish");
       const originalText = btn.textContent;
-      btn.disabled = true;
       btn.textContent = "Procesando...";
+      btn.disabled = true;
 
       let imagenFinal = $("prodImage").value.trim();
       const file = $("prodImageFile")?.files?.[0];
 
+      // Si hay archivo nuevo, subirlo, sino mantener URL actual
       if (file) {
         imagenFinal = await subirImagenProducto(file);
       }
 
       const producto = {
         nombre: $("prodName").value.trim(),
-        precio: $("prodPrice").value,
+        precio: Number($("prodPrice").value),
         categoria: $("prodCategory").value,
         estado: $("prodCondition").value,
         descripcion: $("prodDescription").value.trim(),
@@ -157,89 +148,126 @@ document.addEventListener("DOMContentLoaded", () => {
       };
 
       if (!producto.nombre || !producto.precio) {
-        btn.disabled = false;
-        btn.textContent = originalText;
-        return alert("Coloca nombre y precio.");
+        throw new Error("Nombre y precio requeridos");
       }
 
       if (state.editId) {
         await actualizarProducto(state.editId, producto);
       } else {
-        await Array.isArray(producto) ? await publicarProducto(producto[0]) : await publicarProducto(producto);
+        await publicarProducto(producto);
       }
 
       limpiarFormulario();
       closeModals();
       await loadProducts();
       await loadMyProducts();
-      await setSection("vender");
-
     } catch (e) {
-      console.error(e);
       alert("Error: " + e.message);
     } finally {
-      const btn = $("btnPublish");
-      if (btn) btn.disabled = false;
+      $("btnPublish").disabled = false;
+      $("btnPublish").textContent = state.editId ? "Guardar cambios" : "Publicar";
     }
   });
 
   observarAuth(async (user) => {
     state.user = user;
-    // Eliminado cualquier código que escribía en searchInput
-    if (user) await loadMyProducts();
+    if (user) {
+      $("notLoggedSell")?.classList.add("hidden");
+      await loadMyProducts();
+    } else {
+      $("notLoggedSell")?.classList.remove("hidden");
+      state.myProducts = [];
+    }
     render();
   });
 
-  // 2 y 3. EDITAR/ELIMINAR Y PROPAGACIÓN: Listeners restaurados y stopPropagation
+  // 2, 3 y 4. EVENTOS DE TARJETAS (EDITAR/ELIMINAR)
   document.addEventListener("click", (e) => {
     const editBtn = e.target.closest("[data-edit]");
     const deleteBtn = e.target.closest("[data-delete]");
+    const card = e.target.closest(".product-card");
 
     if (editBtn) {
-      e.preventDefault();
-      e.stopPropagation(); // Evita abrir la tarjeta
+      e.stopPropagation();
       editarProducto(editBtn.dataset.edit);
       return;
     }
 
     if (deleteBtn) {
-      e.preventDefault();
-      e.stopPropagation(); // Evita abrir la tarjeta
+      e.stopPropagation();
       borrarProducto(deleteBtn.dataset.delete);
       return;
     }
 
-    const card = e.target.closest(".product-card");
     if (card && card.dataset.id) {
-      if (e.target.closest(".product-actions")) return;
-      const p = [...state.products, ...state.myProducts].find(
-        x => String(x.id) === String(card.dataset.id)
-      );
+      const p = state.products.find(x => String(x.id) === String(card.dataset.id)) || 
+                state.myProducts.find(x => String(x.id) === String(card.dataset.id));
       if (p) openProductModal(p);
-      return;
     }
-
-    if (e.target.id === "productModal") closeProductModal();
   });
 
-  function openProductModal(p) {
-    $("modalImg").src = p.imagen || "https://via.placeholder.com/400";
-    $("modalTitle").textContent = p.nombre || "";
-    $("modalPrice").textContent = `Bs ${p.precio || 0}`;
-    $("modalDesc").textContent = p.descripcion || "Sin descripción";
-    $("modalCat").textContent = p.categoria || "-";
-    $("modalState").textContent = p.estado || "-";
-    $("modalUb").textContent = p.ubicacion || "-";
-    $("productModal").classList.remove("hidden");
-    $("productModal").classList.add("show");
+  function editarProducto(id) {
+    const p = state.myProducts.find(x => String(x.id) === String(id));
+    if (!p) return;
+
+    state.editId = p.id;
+    $("prodName").value = p.nombre || "";
+    $("prodPrice").value = p.precio || "";
+    $("prodCategory").value = p.categoria || "Libros";
+    $("prodCondition").value = p.estado || "Usado";
+    $("prodDescription").value = p.descripcion || "";
+    $("prodLocation").value = p.ubicacion || "";
+    $("prodImage").value = p.imagen || "";
+    $("prodPhone").value = p.telefono || "";
+
+    $("btnPublish").textContent = "Guardar cambios";
+    openSell();
   }
 
-  function closeProductModal() {
-    $("productModal").classList.remove("show");
-    setTimeout(() => $("productModal").classList.add("hidden"), 200);
+  // 3. ELIMINAR: Sin alert, usando deleteModal
+  function borrarProducto(id) {
+    const dModal = $("deleteModal");
+    dModal.classList.remove("hidden");
+
+    $("confirmDelete").onclick = async () => {
+      try {
+        $("confirmDelete").disabled = true;
+        $("confirmDelete").textContent = "Eliminando...";
+        await eliminarProducto(id);
+        dModal.classList.add("hidden");
+        await loadProducts();
+        await loadMyProducts();
+      } catch (e) {
+        console.error(e);
+      } finally {
+        $("confirmDelete").disabled = false;
+        $("confirmDelete").textContent = "Eliminar";
+      }
+    };
+
+    $("cancelDelete").onclick = () => dModal.classList.add("hidden");
   }
 
-  $("closeProductModal")?.addEventListener("click", closeProductModal);
+  // BUSCADOR: Solo ejecuta cuando se solicita
+  function filtrarBusqueda() {
+    const texto = $("searchInput").value.toLowerCase().trim();
+    if (!texto) {
+        loadProducts();
+        return;
+    }
+    const res = state.products.filter(p => 
+      p.nombre.toLowerCase().includes(texto) || 
+      p.categoria.toLowerCase().includes(texto)
+    );
+    if (ui.buyGrid) ui.buyGrid.innerHTML = res.map(renderCard).join("");
+    state.section = "comprar";
+    render();
+  }
+
+  $("searchBtn")?.addEventListener("click", filtrarBusqueda);
+  ui.searchInput?.addEventListener("keypress", (e) => {
+    if (e.key === "Enter") filtrarBusqueda();
+  });
 
   async function loadProducts() {
     const data = await obtenerProductos();
@@ -255,75 +283,36 @@ document.addEventListener("DOMContentLoaded", () => {
     if (ui.myGrid) ui.myGrid.innerHTML = state.myProducts.map(renderCard).join("");
   }
 
-  function editarProducto(id) {
-    const p = state.myProducts.find(x => String(x.id) === String(id));
-    if (!p) return;
-    state.editId = p.id;
-    $("prodName").value = p.nombre || "";
-    $("prodPrice").value = p.precio || "";
-    $("prodCategory").value = p.categoria || "Otros";
-    $("prodCondition").value = p.estado || "Usado";
-    $("prodDescription").value = p.descripcion || "";
-    $("prodLocation").value = p.ubicacion || "";
-    $("prodImage").value = p.imagen || "";
-    $("prodPhone").value = p.telefono || "";
-    $("btnPublish").textContent = "Guardar cambios";
-    openSell();
-  }
-
-  // 2. ELIMINAR: Uso de deleteModal sin alerts nativos
-  async function borrarProducto(id) {
-    const dModal = $("deleteModal");
-    const confirmBtn = $("confirmDelete");
-    const cancelBtn = $("cancelDelete");
-
-    dModal.classList.remove("hidden");
-
-    cancelBtn.onclick = () => dModal.classList.add("hidden");
-
-    confirmBtn.onclick = async () => {
-      try {
-        confirmBtn.disabled = true;
-        confirmBtn.textContent = "Eliminando...";
-        await eliminarProducto(id);
-        dModal.classList.add("hidden");
-        await loadProducts();
-        await loadMyProducts();
-      } catch (e) {
-        console.error(e);
-      } finally {
-        confirmBtn.disabled = false;
-        confirmBtn.textContent = "Eliminar";
-      }
-    };
-  }
-
   function renderCard(p) {
     const isMine = state.user && p.user_id === state.user.id;
     return `
       <div class="product-card" data-id="${p.id}">
         <img class="product-img" src="${p.imagen || 'https://via.placeholder.com/300'}" onerror="this.src='https://via.placeholder.com/300'">
         <div class="product-info">
-          <div class="product-category">${p.categoria || "General"}</div>
-          <div class="product-title">${p.nombre || "Sin nombre"}</div>
-          <div class="product-price">Bs ${p.precio || 0}</div>
-          <div class="product-meta"><span>📍 ${p.ubicacion || "Bolivia"}</span></div>
+          <div class="product-category">${p.categoria}</div>
+          <div class="product-title">${p.nombre}</div>
+          <div class="product-price">Bs ${p.precio}</div>
+          <div class="product-meta"><span>📍 ${p.ubicacion}</span></div>
           ${isMine ? `
             <div class="product-actions">
-              <button type="button" class="btn-edit" data-edit="${p.id}">Editar</button>
-              <button type="button" class="btn-delete" data-delete="${p.id}">Eliminar</button>
+              <button class="btn-edit" data-edit="${p.id}">Editar</button>
+              <button class="btn-delete" data-delete="${p.id}">Eliminar</button>
             </div>` : ""}
         </div>
       </div>`;
   }
 
+  function limpiarFormulario() {
+    state.editId = null;
+    $("prodName").value = "";
+    $("prodPrice").value = "";
+    $("prodDescription").value = "";
+    $("prodImage").value = "";
+    $("prodImageFile").value = "";
+    $("prodPhone").value = "";
+    $("btnPublish").textContent = "Publicar";
+  }
+
   loadProducts();
   setSection("home");
 });
-
-function limpiarFormulario() {
-  const ids = ["prodName", "prodPrice", "prodDescription", "prodImage", "prodPhone", "prodImageFile"];
-  ids.forEach(id => { if (document.getElementById(id)) document.getElementById(id).value = ""; });
-  const btn = document.getElementById("btnPublish");
-  if (btn) btn.textContent = "Publicar";
-}
