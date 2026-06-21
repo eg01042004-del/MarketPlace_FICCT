@@ -40,8 +40,8 @@ document.addEventListener("DOMContentLoaded", () => {
     searchInput: $("searchInput"),
     searchBtn: $("searchBtn"),
     navLinks: document.querySelectorAll(
-  ".brand[data-section], .sidebar-item[data-section], .nav-link:not(.cat-tab)[data-section], .sell-hero [data-section]"
-)
+      ".brand[data-section], .sidebar-item[data-section], .nav-link:not(.cat-tab)[data-section], .sell-hero [data-section]"
+    )
   };
 
   if (ui.searchInput) {
@@ -114,7 +114,6 @@ document.addEventListener("DOMContentLoaded", () => {
     btn.addEventListener("click", () => {
       document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
       document.querySelectorAll(".tab-panel").forEach(p => p.classList.remove("active"));
-
       btn.classList.add("active");
       document.getElementById(`tab-${btn.dataset.tab}`)?.classList.add("active");
     });
@@ -322,7 +321,6 @@ document.addEventListener("DOMContentLoaded", () => {
     if (fileInput) fileInput.value = "";
 
     $("btnPublish").textContent = "Guardar cambios";
-
     openSell();
   }
 
@@ -346,11 +344,8 @@ document.addEventListener("DOMContentLoaded", () => {
       try {
         confirmBtn.disabled = true;
         confirmBtn.textContent = "Eliminando...";
-
         await eliminarProducto(id);
-
         modal.classList.add("hidden");
-
         await loadProducts();
         await loadMyProducts();
       } catch (e) {
@@ -550,86 +545,38 @@ document.addEventListener("DOMContentLoaded", () => {
     overlay?.classList.add("hidden");
     overlay?.classList.remove("visible");
   });
-  document.querySelectorAll(".cat-tab").forEach(btn=>{
 
-btn.onclick=
-async(e)=>{
+  document.querySelectorAll(".cat-tab").forEach(btn => {
+    btn.onclick = async (e) => {
+      e.preventDefault();
 
-e.preventDefault();
+      document.querySelectorAll(".cat-tab").forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
 
-document
-.querySelectorAll(
-".cat-tab"
-)
-.forEach(
-b=>
-b.classList.remove(
-"active"
-)
-);
+      await loadProducts();
 
-btn.classList.add(
-"active"
-);
+      const categoria = btn.dataset.category;
 
-await loadProducts();
+      const filtrados =
+        categoria === "Todos"
+          ? state.products
+          : state.products.filter(p => (p.categoria || "") === categoria);
 
-const categoria=
-btn.dataset.category;
+      state.section = "comprar";
 
-const filtrados=
+      if (ui.buyGrid) {
+        ui.buyGrid.innerHTML = filtrados.length
+          ? filtrados.map(renderCard).join("")
+          : `<p class="no-products">No hay productos en esta categoría.</p>`;
+      }
 
-categoria===
-"Todos"
+      render();
+    };
+  });
 
-?
-
-state.products
-
-:
-
-state.products.filter(
-p=>
-(p.categoria||"")
-.toLowerCase()
-===
-categoria
-.toLowerCase()
-);
-
-state.section=
-"comprar";
-
-if(
-ui.buyGrid
-){
-
-ui.buyGrid.innerHTML=
-
-filtrados.length
-
-?
-
-filtrados
-.map(
-renderCard
-)
-.join("")
-
-:
-
-`<p class="no-products">
-No hay productos
-</p>`;
-
-}
-
-render();
-
-};
-
-});
-
-  loadProducts();
-  setSection("home");
+  (async () => {
+    await loadProducts();
+    state.section = "home";
+    render();
+  })();
 });
