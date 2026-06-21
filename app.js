@@ -581,6 +581,37 @@ document.addEventListener("DOMContentLoaded", () => {
     render();
   });
 });
+document.querySelectorAll(".cat-tab").forEach(btn => {
+  btn.addEventListener("click", async (e) => {
+    e.preventDefault();
+    e.stopImmediatePropagation();
+
+    document.querySelectorAll(".cat-tab").forEach(b => {
+      b.classList.remove("active");
+    });
+
+    btn.classList.add("active");
+
+    await loadProducts();
+
+    const categoria = btn.dataset.category;
+
+    const filtrados =
+      categoria === "Todos"
+        ? state.products
+        : state.products.filter(p => p.categoria === categoria);
+
+    state.section = "comprar";
+
+    if (ui.buyGrid) {
+      ui.buyGrid.innerHTML = filtrados.length
+        ? filtrados.map(renderCard).join("")
+        : `<p class="no-products">No hay productos en esta categoría.</p>`;
+    }
+
+    render();
+  }, true);
+});
   loadProducts();
   setSection("home");
 });
