@@ -376,79 +376,42 @@ if (editandoGuardado) {
     openSell();
     sessionStorage.setItem("editandoProducto", String(p.id));
   }
+async function borrarProducto(id) {
+  const modal = document.getElementById("deleteModal");
+  const cancelBtn = document.getElementById("cancelDelete");
+  const confirmBtn = document.getElementById("confirmDelete");
 
-  
-   async function borrarProducto(id){
+  if (!modal || !cancelBtn || !confirmBtn) {
+    alert("No se encontró el modal de eliminar.");
+    return;
+  }
 
-const modal=
-document.getElementById(
-"deleteModal"
-);
+  modal.classList.remove("hidden");
 
-modal.classList.remove(
-"hidden"
-);
+  cancelBtn.onclick = () => {
+    modal.classList.add("hidden");
+  };
 
-return new Promise(
+  confirmBtn.onclick = async () => {
+    try {
+      confirmBtn.disabled = true;
+      confirmBtn.textContent = "Eliminando...";
 
-(resolve)=>{
+      await eliminarProducto(id);
 
-document
-.getElementById(
-"cancelDelete"
-)
+      modal.classList.add("hidden");
 
-.onclick=()=>{
+      await loadProducts();
+      await loadMyProducts();
 
-modal.classList.add(
-"hidden"
-);
-
-resolve();
-
-};
-
-document
-.getElementById(
-"confirmDelete"
-)
-
-.onclick=async()=>{
-
-modal.classList.add(
-"hidden"
-);
-
-try{
-
-await eliminarProducto(
-id
-);
-
-alert(
-"Producto eliminado"
-);
-
-await loadProducts();
-
-await loadMyProducts();
-
-}catch(e){
-
-alert(
-e.message
-);
-
-}
-
-resolve();
-
-};
-
-}
-
-);
-
+      alert("Producto eliminado correctamente");
+    } catch (e) {
+      alert("Error al eliminar: " + e.message);
+    } finally {
+      confirmBtn.disabled = false;
+      confirmBtn.textContent = "Eliminar";
+    }
+  };
 }
 
   function renderCard(p) {
