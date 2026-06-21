@@ -550,68 +550,86 @@ document.addEventListener("DOMContentLoaded", () => {
     overlay?.classList.add("hidden");
     overlay?.classList.remove("visible");
   });
-  document.querySelectorAll(".cat-tab").forEach(btn => {
-  btn.addEventListener("click", async (e) => {
-    e.preventDefault();
-    e.stopPropagation();
+  document.querySelectorAll(".cat-tab").forEach(btn=>{
 
-    document.querySelectorAll(".cat-tab").forEach(b => {
-      b.classList.remove("active");
-    });
+btn.onclick=
+async(e)=>{
 
-    btn.classList.add("active");
+e.preventDefault();
 
-    await loadProducts();
+document
+.querySelectorAll(
+".cat-tab"
+)
+.forEach(
+b=>
+b.classList.remove(
+"active"
+)
+);
 
-    const categoria = btn.dataset.category;
+btn.classList.add(
+"active"
+);
 
-    const filtrados =
-      categoria === "Todos"
-        ? state.products
-        : state.products.filter(p => p.categoria === categoria);
+await loadProducts();
 
-    state.section = "comprar";
+const categoria=
+btn.dataset.category;
 
-    if (ui.buyGrid) {
-      ui.buyGrid.innerHTML = filtrados.length
-        ? filtrados.map(renderCard).join("")
-        : `<p class="no-products">No hay productos en esta categoría.</p>`;
-    }
+const filtrados=
 
-    render();
-  });
+categoria===
+"Todos"
+
+?
+
+state.products
+
+:
+
+state.products.filter(
+p=>
+(p.categoria||"")
+.toLowerCase()
+===
+categoria
+.toLowerCase()
+);
+
+state.section=
+"comprar";
+
+if(
+ui.buyGrid
+){
+
+ui.buyGrid.innerHTML=
+
+filtrados.length
+
+?
+
+filtrados
+.map(
+renderCard
+)
+.join("")
+
+:
+
+`<p class="no-products">
+No hay productos
+</p>`;
+
+}
+
+render();
+
+};
+
 });
-document.querySelectorAll(".cat-tab").forEach(btn => {
-  btn.addEventListener("click", async (e) => {
-    e.preventDefault();
-    e.stopImmediatePropagation();
 
-    document.querySelectorAll(".cat-tab").forEach(b => {
-      b.classList.remove("active");
-    });
-
-    btn.classList.add("active");
-
-    await loadProducts();
-
-    const categoria = btn.dataset.category;
-
-    const filtrados =
-      categoria === "Todos"
-        ? state.products
-        : state.products.filter(p => p.categoria === categoria);
-
-    state.section = "comprar";
-
-    if (ui.buyGrid) {
-      ui.buyGrid.innerHTML = filtrados.length
-        ? filtrados.map(renderCard).join("")
-        : `<p class="no-products">No hay productos en esta categoría.</p>`;
-    }
-
-    render();
-  }, true);
-});
   loadProducts();
   setSection("home");
 });
