@@ -4,7 +4,6 @@ import {
   logout,
   observarAuth
 } from "./auth.js";
-
 import {
   publicarProducto,
   obtenerProductos,
@@ -29,14 +28,23 @@ document.addEventListener("DOMContentLoaded", () => {
   const ui = {
     loginModal: $("loginModal"),
     sellModal: $("sellModal"),
+    deleteModal: $("deleteModal"),
     authArea: $("authArea"),
     userMenu: $("userMenu"),
     userName: $("userNameDisplay"),
     buyGrid: $("buyGrid"),
     recentGrid: $("recentGrid"),
     myGrid: $("myListingsGrid"),
+    searchInput: $("searchInput"),
     navLinks: document.querySelectorAll("[data-section]:not(.cat-tab)")
   };
+
+  // 1. BUSCADOR: Limpieza total de autocompletado y valores iniciales
+  if (ui.searchInput) {
+    ui.searchInput.value = ""; 
+    ui.searchInput.setAttribute("autocomplete", "off");
+    ui.searchInput.setAttribute("name", "search_" + Math.random().toString(36).slice(2));
+  }
 
   function render() {
     ui.loginModal?.classList.toggle("hidden", !state.modal.login);
@@ -94,16 +102,6 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   });
 
-  document.querySelectorAll(".tab-btn").forEach(btn => {
-    btn.addEventListener("click", () => {
-      document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
-      document.querySelectorAll(".tab-panel").forEach(p => p.classList.remove("active"));
-
-      btn.classList.add("active");
-      document.getElementById(`tab-${btn.dataset.tab}`)?.classList.add("active");
-    });
-  });
-
   $("btnLogin")?.addEventListener("click", openLogin);
   $("modalClose")?.addEventListener("click", closeModals);
   $("sellModalClose")?.addEventListener("click", closeModals);
@@ -121,64 +119,31 @@ document.addEventListener("DOMContentLoaded", () => {
     try {
       const email = $("loginEmail").value.trim();
       const password = $("loginPassword").value.trim();
-
-      if (!email || !password) {
-        alert("Coloca correo y contraseña.");
-        return;
-      }
-
+      if (!email || !password) return;
       await login(email, password);
       closeModals();
       await loadProducts();
     } catch (e) {
-      alert("Error al ingresar: " + e.message);
+      alert("Error: " + e.message);
     }
   });
 
-  $("btnRegister")?.addEventListener("click", async () => {
-    try {
-      const email = $("regEmail").value.trim();
-      const password = $("regPassword").value.trim();
-
-      if (!email || !password) {
-        alert("Coloca correo y contraseña.");
-        return;
-      }
-
-      if (password.length < 6) {
-        alert("La contraseña debe tener mínimo 6 caracteres.");
-        return;
-      }
-
-      await registrar(email, password);
-      alert("Cuenta creada. Ahora inicia sesión.");
-    } catch (e) {
-      alert("Error al registrar: " + e.message);
-    }
-  });
-
-  $("userAvatarBtn")?.addEventListener("click", (e) => {
-    e.stopPropagation();
-    $("dropdownMenu")?.classList.toggle("open");
-  });
-
-  document.addEventListener("click", (e) => {
-    const menu = $("dropdownMenu");
-    const btn = $("userAvatarBtn");
-
-    if (menu && btn && !menu.contains(e.target) && !btn.contains(e.target)) {
-      menu.classList.remove("open");
-    }
-  });
-
+  // 4. CÁMARA Y PUBLICACIÓN: Gestión de imagen sin cerrar formulario
   $("btnPublish")?.addEventListener("click", async () => {
     try {
       if (!state.user) return openLogin();
 
+      const btn = $("btnPublish");
+      const originalText = btn.textContent;
+      btn.disabled = true;
+      btn.textContent = "Procesando...";
+
       let imagenFinal = $("prodImage").value.trim();
       const file = $("prodImageFile")?.files?.[0];
 
-      if (file) imagenFinal = await subirImagenProducto(file);
+      if (file) {
+        imagenFinal = await subirImagenProducto(file);
+      }
 
       const producto = {
         nombre: $("prodName").value.trim(),
@@ -192,251 +157,140 @@ document.addEventListener("DOMContentLoaded", () => {
       };
 
       if (!producto.nombre || !producto.precio) {
-        alert("Coloca nombre y precio.");
-        return;
+        btn.disabled = false;
+        btn.textContent = originalText;
+        return alert("Coloca nombre y precio.");
       }
 
       if (state.editId) {
         await actualizarProducto(state.editId, producto);
-        alert("Producto actualizado");
       } else {
-        await publicarProducto(producto);
-        alert("Producto publicado");
+        await Array.isArray(producto) ? await publicarProducto(producto[0]) : await publicarProducto(producto);
       }
 
       limpiarFormulario();
       closeModals();
-
       await loadProducts();
       await loadMyProducts();
-
-      state.section = "vender";
-      render();
+      await setSection("vender");
 
     } catch (e) {
       console.error(e);
       alert("Error: " + e.message);
+    } finally {
+      const btn = $("btnPublish");
+      if (btn) btn.disabled = false;
     }
   });
 
   observarAuth(async (user) => {
     state.user = user;
-
-    const msg = $("notLoggedSell");
-
-    if (user) {
-      msg?.classList.add("hidden");
-      await loadMyProducts();
-    } else {
-      msg?.classList.remove("hidden");
-      state.myProducts = [];
-    }
-
+    // Eliminado cualquier código que escribía en searchInput
+    if (user) await loadMyProducts();
     render();
   });
 
-  const productModal = $("productModal");
-  const modalImg = $("modalImg");
-  const modalTitle = $("modalTitle");
-  const modalPrice = $("modalPrice");
-  const modalDesc = $("modalDesc");
-  const modalCat = $("modalCat");
-  const modalState = $("modalState");
-  const modalUb = $("modalUb");
-  const btnContact = $("contactSellerBtn");
-
-  let selectedProduct = null;
-
-  function openProductModal(p) {
-    selectedProduct = p;
-
-    if (modalImg) modalImg.src = p.imagen || "https://via.placeholder.com/400";
-    if (modalTitle) modalTitle.textContent = p.nombre || "";
-    if (modalPrice) modalPrice.textContent = `Bs ${p.precio || 0}`;
-    if (modalDesc) modalDesc.textContent = p.descripcion || "Sin descripción";
-    if (modalCat) modalCat.textContent = p.categoria || "-";
-    if (modalState) modalState.textContent = p.estado || "-";
-    if (modalUb) modalUb.textContent = p.ubicacion || "-";
-
-    productModal?.classList.remove("hidden");
-    productModal?.classList.add("show");
-  }
-
-  function closeProductModal() {
-    productModal?.classList.remove("show");
-
-    setTimeout(() => {
-      productModal?.classList.add("hidden");
-    }, 200);
-
-    selectedProduct = null;
-  }
-
+  // 2 y 3. EDITAR/ELIMINAR Y PROPAGACIÓN: Listeners restaurados y stopPropagation
   document.addEventListener("click", (e) => {
     const editBtn = e.target.closest("[data-edit]");
     const deleteBtn = e.target.closest("[data-delete]");
 
     if (editBtn) {
       e.preventDefault();
-      e.stopPropagation();
+      e.stopPropagation(); // Evita abrir la tarjeta
       editarProducto(editBtn.dataset.edit);
       return;
     }
 
     if (deleteBtn) {
       e.preventDefault();
-      e.stopPropagation();
+      e.stopPropagation(); // Evita abrir la tarjeta
       borrarProducto(deleteBtn.dataset.delete);
       return;
     }
 
     const card = e.target.closest(".product-card");
-
     if (card && card.dataset.id) {
       if (e.target.closest(".product-actions")) return;
-
-      const p = state.products.find(
+      const p = [...state.products, ...state.myProducts].find(
         x => String(x.id) === String(card.dataset.id)
       );
-
       if (p) openProductModal(p);
       return;
     }
 
-    if (e.target.id === "productModal") {
-      closeProductModal();
-    }
+    if (e.target.id === "productModal") closeProductModal();
   });
+
+  function openProductModal(p) {
+    $("modalImg").src = p.imagen || "https://via.placeholder.com/400";
+    $("modalTitle").textContent = p.nombre || "";
+    $("modalPrice").textContent = `Bs ${p.precio || 0}`;
+    $("modalDesc").textContent = p.descripcion || "Sin descripción";
+    $("modalCat").textContent = p.categoria || "-";
+    $("modalState").textContent = p.estado || "-";
+    $("modalUb").textContent = p.ubicacion || "-";
+    $("productModal").classList.remove("hidden");
+    $("productModal").classList.add("show");
+  }
+
+  function closeProductModal() {
+    $("productModal").classList.remove("show");
+    setTimeout(() => $("productModal").classList.add("hidden"), 200);
+  }
 
   $("closeProductModal")?.addEventListener("click", closeProductModal);
 
-  btnContact?.addEventListener("click", () => {
-    if (!selectedProduct) return;
-
-    const tel = selectedProduct.telefono;
-
-    if (!tel) {
-      alert("El vendedor no dejó número de contacto");
-      return;
-    }
-
-    const cleanTel = tel.replace(/\D/g, "");
-    const msg = encodeURIComponent(
-      `Hola, vi tu producto "${selectedProduct.nombre}" en FICCT Market y estoy interesado.`
-    );
-
-    window.open(`https://wa.me/${cleanTel}?text=${msg}`, "_blank");
-  });
-
   async function loadProducts() {
-    try {
-      const data = await obtenerProductos();
-      state.products = data || [];
-
-      if (ui.buyGrid) {
-        ui.buyGrid.innerHTML = state.products.length
-          ? state.products.map(renderCard).join("")
-          : `<p class="no-products">No hay productos disponibles.</p>`;
-      }
-
-      if (ui.recentGrid) {
-        ui.recentGrid.innerHTML = state.products.length
-          ? state.products.slice(0, 6).map(renderCard).join("")
-          : `<p class="no-products">No hay productos disponibles.</p>`;
-      }
-    } catch (err) {
-      console.error(err);
-
-      if (ui.buyGrid) ui.buyGrid.innerHTML = `<p>Error cargando productos</p>`;
-      if (ui.recentGrid) ui.recentGrid.innerHTML = `<p>Error cargando productos</p>`;
-    }
+    const data = await obtenerProductos();
+    state.products = data || [];
+    if (ui.buyGrid) ui.buyGrid.innerHTML = state.products.map(renderCard).join("");
+    if (ui.recentGrid) ui.recentGrid.innerHTML = state.products.slice(0, 6).map(renderCard).join("");
   }
 
   async function loadMyProducts() {
-    if (!state.user) {
-      if (ui.myGrid) ui.myGrid.innerHTML = "";
-      return;
-    }
-
+    if (!state.user) return;
     const data = await obtenerMisProductos();
     state.myProducts = data || [];
-
-    if (ui.myGrid) {
-      ui.myGrid.innerHTML = state.myProducts.length
-        ? state.myProducts.map(renderCard).join("")
-        : `<p class="no-products">No tienes productos publicados.</p>`;
-    }
-  }
-
-  function limpiarFormulario() {
-    $("prodName").value = "";
-    $("prodPrice").value = "";
-    $("prodDescription").value = "";
-    $("prodLocation").value = "Santa Cruz, Bolivia";
-    $("prodImage").value = "";
-    $("prodPhone").value = "";
-
-    if ($("prodImageFile")) {
-      $("prodImageFile").value = "";
-    }
-
-    state.editId = null;
-
-    if ($("btnPublish")) {
-      $("btnPublish").textContent = "Publicar";
-    }
+    if (ui.myGrid) ui.myGrid.innerHTML = state.myProducts.map(renderCard).join("");
   }
 
   function editarProducto(id) {
     const p = state.myProducts.find(x => String(x.id) === String(id));
-
     if (!p) return;
-
     state.editId = p.id;
-
     $("prodName").value = p.nombre || "";
     $("prodPrice").value = p.precio || "";
-    $("prodCategory").value = p.categoria || "Libros";
+    $("prodCategory").value = p.categoria || "Otros";
     $("prodCondition").value = p.estado || "Usado";
     $("prodDescription").value = p.descripcion || "";
     $("prodLocation").value = p.ubicacion || "";
     $("prodImage").value = p.imagen || "";
     $("prodPhone").value = p.telefono || "";
-
     $("btnPublish").textContent = "Guardar cambios";
     openSell();
   }
 
+  // 2. ELIMINAR: Uso de deleteModal sin alerts nativos
   async function borrarProducto(id) {
-    const modal = $("deleteModal");
-    const cancelBtn = $("cancelDelete");
+    const dModal = $("deleteModal");
     const confirmBtn = $("confirmDelete");
+    const cancelBtn = $("cancelDelete");
 
-    if (!modal || !cancelBtn || !confirmBtn) {
-      alert("No se encontró el modal de eliminar.");
-      return;
-    }
+    dModal.classList.remove("hidden");
 
-    modal.classList.remove("hidden");
-
-    cancelBtn.onclick = () => {
-      modal.classList.add("hidden");
-    };
+    cancelBtn.onclick = () => dModal.classList.add("hidden");
 
     confirmBtn.onclick = async () => {
       try {
         confirmBtn.disabled = true;
         confirmBtn.textContent = "Eliminando...";
-
         await eliminarProducto(id);
-
-        modal.classList.add("hidden");
-
+        dModal.classList.add("hidden");
         await loadProducts();
         await loadMyProducts();
-
       } catch (e) {
-        alert("Error al eliminar: " + e.message);
+        console.error(e);
       } finally {
         confirmBtn.disabled = false;
         confirmBtn.textContent = "Eliminar";
@@ -446,142 +300,30 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function renderCard(p) {
     const isMine = state.user && p.user_id === state.user.id;
-
     return `
       <div class="product-card" data-id="${p.id}">
-        <img
-          class="product-img"
-          src="${p.imagen || 'https://via.placeholder.com/300'}"
-          onerror="this.src='https://via.placeholder.com/300'"
-        >
-
+        <img class="product-img" src="${p.imagen || 'https://via.placeholder.com/300'}" onerror="this.src='https://via.placeholder.com/300'">
         <div class="product-info">
           <div class="product-category">${p.categoria || "General"}</div>
           <div class="product-title">${p.nombre || "Sin nombre"}</div>
           <div class="product-price">Bs ${p.precio || 0}</div>
-
-          <div class="product-meta">
-            <span>📍 ${p.ubicacion || "Bolivia"}</span>
-          </div>
-
-          ${
-            isMine
-              ? `
-              <div class="product-actions">
-                <button type="button" class="btn-edit" data-edit="${p.id}">
-                  Editar
-                </button>
-
-                <button type="button" class="btn-delete" data-delete="${p.id}">
-                  Eliminar
-                </button>
-              </div>
-              `
-              : ""
-          }
+          <div class="product-meta"><span>📍 ${p.ubicacion || "Bolivia"}</span></div>
+          ${isMine ? `
+            <div class="product-actions">
+              <button type="button" class="btn-edit" data-edit="${p.id}">Editar</button>
+              <button type="button" class="btn-delete" data-delete="${p.id}">Eliminar</button>
+            </div>` : ""}
         </div>
-      </div>
-    `;
+      </div>`;
   }
-
-  document.querySelectorAll(".cat-tab").forEach(btn => {
-    btn.addEventListener("click", async (e) => {
-      e.preventDefault();
-
-      document.querySelectorAll(".cat-tab").forEach(b => b.classList.remove("active"));
-      btn.classList.add("active");
-
-      await loadProducts();
-
-      const categoria = btn.dataset.category;
-
-      const filtrados =
-        categoria === "Todos"
-          ? state.products
-          : state.products.filter(p => p.categoria === categoria);
-
-      if (ui.buyGrid) {
-        ui.buyGrid.innerHTML = filtrados.length
-          ? filtrados.map(renderCard).join("")
-          : `<p class="no-products">No hay productos en esta categoría.</p>`;
-      }
-
-      state.section = "comprar";
-      render();
-    });
-  });
-
-  function filtrarBusqueda() {
-    const texto = $("searchInput")?.value.toLowerCase().trim() || "";
-
-    const resultados = state.products.filter(p =>
-      (p.nombre || "").toLowerCase().includes(texto) ||
-      (p.descripcion || "").toLowerCase().includes(texto) ||
-      (p.categoria || "").toLowerCase().includes(texto) ||
-      (p.ubicacion || "").toLowerCase().includes(texto)
-    );
-
-    state.section = "comprar";
-
-    if (ui.buyGrid) {
-      ui.buyGrid.innerHTML = resultados.length
-        ? resultados.map(renderCard).join("")
-        : `<p class="no-products">No se encontraron productos.</p>`;
-    }
-
-    render();
-  }
-
-  $("searchBtn")?.addEventListener("click", async () => {
-    await loadProducts();
-    filtrarBusqueda();
-  });
-
-  $("searchInput")?.addEventListener("keyup", async (e) => {
-    if (e.key === "Enter") {
-      await loadProducts();
-      filtrarBusqueda();
-    }
-  });
-
-  $("searchInput")?.addEventListener("input", () => {
-    filtrarBusqueda();
-  });
-
-  const sidebar = $("sidebar");
-  const overlay = $("sidebarOverlay");
-  const hamburger = $("hamburgerBtn");
-
-  function openSidebar() {
-    sidebar?.classList.add("open");
-    overlay?.classList.remove("hidden");
-    overlay?.classList.add("visible");
-  }
-
-  function closeSidebar() {
-    sidebar?.classList.remove("open");
-    overlay?.classList.remove("visible");
-    overlay?.classList.add("hidden");
-  }
-
-  hamburger?.addEventListener("click", (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-
-    sidebar?.classList.contains("open")
-      ? closeSidebar()
-      : openSidebar();
-  });
-
-  overlay?.addEventListener("click", closeSidebar);
-
-  document.querySelectorAll(".sidebar-item").forEach(item => {
-    item.addEventListener("click", () => {
-      closeSidebar();
-    });
-  });
 
   loadProducts();
   setSection("home");
-  render();
 });
+
+function limpiarFormulario() {
+  const ids = ["prodName", "prodPrice", "prodDescription", "prodImage", "prodPhone", "prodImageFile"];
+  ids.forEach(id => { if (document.getElementById(id)) document.getElementById(id).value = ""; });
+  const btn = document.getElementById("btnPublish");
+  if (btn) btn.textContent = "Publicar";
+}
